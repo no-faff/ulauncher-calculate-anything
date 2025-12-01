@@ -1,5 +1,6 @@
 from typing import List, Tuple, Union
 import re
+import math
 import cmath
 import operator as op
 
@@ -57,12 +58,76 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
 
     def __init__(self) -> None:
         super().__init__('=')
+        trig_mode = 'deg'  # TODO: get from preferences
         # Cmath to set for simpleeval
-        functions = {
+        functions = {'deg': math.degrees, 'rad': math.radians}
+        math_fns = {
             name: getattr(cmath, name)
             for name in dir(cmath)
-            if not name.startswith('_') and not name.endswith('_')
+            if not (name.startswith('_') or name.endswith('_'))
         }
+        math_fns.update({"atan2": lambda x, y: math.atan2(y, x)})
+
+        # Indices of args that should not be converted
+        trig_convert_exceptions = {
+            'rect': [0]  # r is a distance in rect(r, phi)
+        }
+
+        def convert_args(name, args, conversion):
+            if any(arg.imag != 0 for arg in args):
+                return None
+            converted = []
+            for index, arg in enumerate(args):
+                if index in trig_convert_exceptions.get(name, []):
+                    converted.append(arg.real)
+                else:
+                    converted.append(conversion(arg.real))
+            return converted
+
+        for name, fn in math_fns.items():
+            if any(
+                trig in name for trig in ('asin', 'acos', 'atan', 'phase')
+            ):  # Convert output
+                if trig_mode == 'deg':
+                    functions[name] = (
+                        lambda orig_fn: lambda *args: (
+                            math.degrees(orig_fn(*args).real)
+                            if orig_fn(*args).imag == 0
+                            else None
+                        )
+                    )(fn)
+                elif trig_mode == 'rad':
+                    functions[name] = math_fns[name]
+                elif trig_mode == 'grad':
+                    functions[name] = (
+                        lambda orig_fn: lambda *args: (
+                            orig_fn(*args).real * 200 / cmath.pi
+                            if orig_fn(*args).imag == 0
+                            else None
+                        )
+                    )(fn)
+            elif any(
+                trig in name for trig in ('sin', 'cos', 'tan', 'rect')
+            ):  # Convert input(s)
+                if trig_mode == 'deg':
+                    functions[name] = (
+                        lambda orig_fn, name: lambda *args: orig_fn(
+                            *convert_args(name, args, math.radians)
+                        )
+                    )(fn, name)
+                elif trig_mode == 'rad':
+                    functions[name] = math_fns[name]
+                elif trig_mode == 'grad':
+                    functions[name] = (
+                        lambda orig_fn, name: lambda *args: orig_fn(
+                            *convert_args(
+                                name, args, lambda x: x * cmath.pi / 200
+                            )
+                        )
+                    )(fn, name)
+            else:
+                functions[name] = math_fns[name]
+
         self._simple_eval = get_simple_eval(functions)
         self._function_names = list(functions.keys())
 

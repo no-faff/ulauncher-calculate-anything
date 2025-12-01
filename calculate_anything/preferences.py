@@ -319,6 +319,14 @@ class UnitsPreferences(_Preferences):
             UnitsService().start()
 
 
+class CalculatorPreferences(_Preferences):
+    '''The calculator preferences class
+
+    Attributes:
+    TODO
+    '''
+
+
 class Preferences(metaclass=Singleton):
     '''The Preferences class is a Singleton class which holds all other
     preferences, like language, timezone, units and currency.
@@ -335,6 +343,7 @@ class Preferences(metaclass=Singleton):
         self.time = TimePreferences()
         self.units = UnitsPreferences()
         self.currency = CurrencyPreferences()
+        self.calculator = CalculatorPreferences()
 
     def commit(self) -> None:
         '''Commits preference changes in proper order'''
@@ -342,3 +351,4 @@ class Preferences(metaclass=Singleton):
         self.time.commit()
         self.units.commit()
         self.currency.commit()
+        self.calculator.commit()
