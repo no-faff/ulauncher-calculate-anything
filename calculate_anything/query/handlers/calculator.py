@@ -60,34 +60,56 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
         super().__init__('=')
         trig_mode = 'deg'  # TODO: get from preferences
         # Cmath to set for simpleeval
-        functions = {'deg': math.degrees, 'rad': math.radians}
+        if trig_mode == 'grad':
+            functions = {
+                'deg': lambda x: x * 180 / 200,
+                'rad': lambda x: x * cmath.pi / 200,
+            }
+        else:
+            functions = {'deg': math.degrees, 'rad': math.radians}
         math_fns = {
             name: getattr(cmath, name)
             for name in dir(cmath)
             if not (name.startswith('_') or name.endswith('_'))
         }
-        math_fns.update({"atan2": lambda x, y: math.atan2(y, x)})
+        math_fns.update(
+            {
+                "atan2": lambda x, y: math.atan2(y, x),
+                "csc": lambda x: 1 / cmath.sin(x),
+                "sec": lambda x: 1 / cmath.cos(x),
+                "cot": lambda x: 1 / cmath.tan(x),
+                "acsc": lambda x: cmath.asin(1 / x),
+                "asec": lambda x: cmath.acos(1 / x),
+                "acot": lambda x: cmath.atan(1 / x),
+            }
+        )
 
         # Indices of args that should not be converted
-        trig_convert_exceptions = {
-            'rect': [0]  # r is a distance in rect(r, phi)
-        }
+        convert_exceptions = {'rect': [0]}  # r is a distance in rect(r, phi)
+        convert_outputs = (
+            'asin',
+            'acos',
+            'atan',
+            'acsc',
+            'asec',
+            'acot',
+            'phase',
+        )
+        convert_inputs = ('sin', 'cos', 'tan', 'csc', 'sec', 'cot', 'rect')
 
         def convert_args(name, args, conversion):
             if any(arg.imag != 0 for arg in args):
                 return None
             converted = []
             for index, arg in enumerate(args):
-                if index in trig_convert_exceptions.get(name, []):
+                if index in convert_exceptions.get(name, []):
                     converted.append(arg.real)
                 else:
                     converted.append(conversion(arg.real))
             return converted
 
         for name, fn in math_fns.items():
-            if any(
-                trig in name for trig in ('asin', 'acos', 'atan', 'phase')
-            ):  # Convert output
+            if any(trig in name for trig in convert_outputs):
                 if trig_mode == 'deg':
                     functions[name] = (
                         lambda orig_fn: lambda *args: (
@@ -106,9 +128,7 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
                             else None
                         )
                     )(fn)
-            elif any(
-                trig in name for trig in ('sin', 'cos', 'tan', 'rect')
-            ):  # Convert input(s)
+            elif any(trig in name for trig in convert_inputs):
                 if trig_mode == 'deg':
                     functions[name] = (
                         lambda orig_fn, name: lambda *args: orig_fn(
