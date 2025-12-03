@@ -57,6 +57,7 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
 
     trig_mode = 'rad'
     memory = [0] * 10
+    ans = None  # Last answer
 
     @staticmethod
     def mem_load(index, fn, num_args=1):
@@ -74,12 +75,13 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
         CalculatorQueryHandler.memory = [0] * 10
         return 0
 
-    def convert_args(name, args, conversion):
+    @staticmethod
+    def _convert_args(name, args, conversion):
         if any(arg.imag != 0 for arg in args):
             return None
         converted = []
         for index, arg in enumerate(args):
-            if index in self.convert_exceptions.get(name, []):
+            if index in CalculatorQueryHandler.convert_exceptions.get(name, []):
                 converted.append(arg.real)
             else:
                 converted.append(conversion(arg.real))
@@ -106,13 +108,19 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
         """Initializes the calculator's functions, taking into account the
         trig mode (deg, rad, grad) and memory values.
         """
+        functions = {
+            "mc": self.mem_clear,
+            "ans": lambda: getattr(self, 'ans', 0),
+        }
         if self.trig_mode == 'grad':
-            functions = {
-                'deg': lambda x: x * 180 / 200,
-                'rad': lambda x: x * cmath.pi / 200,
-            }
+            functions.update(
+                {
+                    'deg': lambda x: x * 180 / 200,
+                    'rad': lambda x: x * cmath.pi / 200,
+                }
+            )
         else:
-            functions = {'deg': math.degrees, 'rad': math.radians}
+            functions.update({'deg': math.degrees, 'rad': math.radians})
         for i in range(10):
             functions.update(
                 {
@@ -129,7 +137,6 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
                     ),
                 }
             )
-        functions.update(mc=self.mem_clear)
 
         math_fns = {
             name: getattr(cmath, name)
@@ -172,7 +179,7 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
                 if self.trig_mode == 'deg':
                     functions[name] = (
                         lambda orig_fn, name: lambda *args: orig_fn(
-                            *self.convert_args(name, args, math.radians)
+                            *self._convert_args(name, args, math.radians)
                         )
                     )(fn, name)
                 elif self.trig_mode == 'rad':
@@ -180,7 +187,7 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
                 elif self.trig_mode == 'grad':
                     functions[name] = (
                         lambda orig_fn, name: lambda *args: orig_fn(
-                            *self.convert_args(
+                            *self._convert_args(
                                 name, args, lambda x: x * cmath.pi / 200
                             )
                         )
@@ -379,4 +386,5 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
         else:
             result = CalculatorCalculation(results[0], subqueries[0])
 
+        self.ans = result.value
         return [result]
