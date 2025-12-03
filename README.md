@@ -119,7 +119,7 @@ If you are using Ulauncher use the extension preferences.
 
 The calculator supports calculating trig functions in degrees, radians (default), and gradians. Choose your preferred mode in the extension preferences.
 
-**Note**: Only the radian mode supports complex numbers.
+**Note**: Only the radian mode supports complex numbers in trig functions.
 
 ### Set Currency Provider
 
