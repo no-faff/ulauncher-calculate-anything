@@ -159,7 +159,7 @@ class PreferencesEventListener(EventListener):
 
         with safe_operation('Set trigonometry mode'):
             trig_mode = event.preferences['trig_mode']
-            preferences.calculator.set_trigonometry_mode(trig_mode)
+            preferences.calculator.set_trig_mode(trig_mode)
 
         preferences.commit()
 
@@ -191,8 +191,8 @@ class PreferencesUpdateEventListener(EventListener):
             preferences.time.set_default_cities(event.new_value)
         elif event.id == 'units_conversion_mode':
             preferences.units.set_conversion_mode(event.new_value)
-        elif event.id == 'trigonometry_mode':
-            preferences.calculator.set_trigonometry_mode(event.new_value)
+        elif event.id == 'trig_mode':
+            preferences.calculator.set_trig_mode(event.new_value)
 
         preferences.commit()
 

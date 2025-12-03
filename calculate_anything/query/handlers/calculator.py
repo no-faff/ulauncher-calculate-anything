@@ -43,7 +43,6 @@ __all__ = ['CalculatorQueryHandler']
 logger = logging.getLogger(__name__)
 
 
-@Singleton.function
 def get_simple_eval(functions) -> Union['SimpleEval', StupidEval]:
     simple_eval = SimpleEval()
     if not isinstance(simple_eval, StupidEval):
@@ -56,17 +55,71 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
     equalities and inequalities.
     """
 
+    trig_mode = 'rad'
+    memory = [0] * 10
+
+    @staticmethod
+    def mem_load(index, fn, num_args=1):
+        def load(*args):
+            memory = CalculatorQueryHandler.memory
+            if len(args) == num_args:
+                memory[index] = fn(*((memory[index],) + args))
+            return memory[index]
+
+        return load
+
+    def convert_args(name, args, conversion):
+        if any(arg.imag != 0 for arg in args):
+            return None
+        converted = []
+        for index, arg in enumerate(args):
+            if index in self.convert_exceptions.get(name, []):
+                converted.append(arg.real)
+            else:
+                converted.append(conversion(arg.real))
+        return converted
+
+    # Indices of args that should not be converted
+    convert_exceptions = {'rect': [0]}  # r is a distance in rect(r, phi)
+    convert_outputs = (
+        'asin',
+        'acos',
+        'atan',
+        'acsc',
+        'asec',
+        'acot',
+        'phase',
+    )
+    convert_inputs = ('sin', 'cos', 'tan', 'csc', 'sec', 'cot', 'rect')
+
     def __init__(self) -> None:
         super().__init__('=')
-        trig_mode = 'deg'  # TODO: get from preferences
-        # Cmath to set for simpleeval
-        if trig_mode == 'grad':
+        self._old_trig_mode, self._old_memory = None, None
+
+    def _initialize_fns(self) -> None:
+        """Initializes the calculator's functions, taking into account the
+        trig mode (deg, rad, grad) and memory values.
+        """
+        if self.trig_mode == 'grad':
             functions = {
                 'deg': lambda x: x * 180 / 200,
                 'rad': lambda x: x * cmath.pi / 200,
             }
         else:
             functions = {'deg': math.degrees, 'rad': math.radians}
+        for i in range(10):
+            functions.update(
+                {
+                    "m{}".format(i): self.memory[i],
+                    "m{}l".format(i): self.mem_load(i, lambda x, y: y),
+                    "m{}c".format(i): self.mem_load(i, lambda x: 0, 0),
+                    "m{}a".format(i): self.mem_load(i, op.add),
+                    "m{}s".format(i): self.mem_load(i, op.sub),
+                    "m{}m".format(i): self.mem_load(i, op.mul),
+                    "m{}d".format(i): self.mem_load(i, op.truediv),
+                }
+            )
+
         math_fns = {
             name: getattr(cmath, name)
             for name in dir(cmath)
@@ -84,33 +137,9 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
             }
         )
 
-        # Indices of args that should not be converted
-        convert_exceptions = {'rect': [0]}  # r is a distance in rect(r, phi)
-        convert_outputs = (
-            'asin',
-            'acos',
-            'atan',
-            'acsc',
-            'asec',
-            'acot',
-            'phase',
-        )
-        convert_inputs = ('sin', 'cos', 'tan', 'csc', 'sec', 'cot', 'rect')
-
-        def convert_args(name, args, conversion):
-            if any(arg.imag != 0 for arg in args):
-                return None
-            converted = []
-            for index, arg in enumerate(args):
-                if index in convert_exceptions.get(name, []):
-                    converted.append(arg.real)
-                else:
-                    converted.append(conversion(arg.real))
-            return converted
-
         for name, fn in math_fns.items():
-            if any(trig in name for trig in convert_outputs):
-                if trig_mode == 'deg':
+            if any(trig in name for trig in self.convert_outputs):
+                if self.trig_mode == 'deg':
                     functions[name] = (
                         lambda orig_fn: lambda *args: (
                             math.degrees(orig_fn(*args).real)
@@ -118,9 +147,9 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
                             else None
                         )
                     )(fn)
-                elif trig_mode == 'rad':
+                elif self.trig_mode == 'rad':
                     functions[name] = math_fns[name]
-                elif trig_mode == 'grad':
+                elif self.trig_mode == 'grad':
                     functions[name] = (
                         lambda orig_fn: lambda *args: (
                             orig_fn(*args).real * 200 / cmath.pi
@@ -128,19 +157,19 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
                             else None
                         )
                     )(fn)
-            elif any(trig in name for trig in convert_inputs):
-                if trig_mode == 'deg':
+            elif any(trig in name for trig in self.convert_inputs):
+                if self.trig_mode == 'deg':
                     functions[name] = (
                         lambda orig_fn, name: lambda *args: orig_fn(
-                            *convert_args(name, args, math.radians)
+                            *self.convert_args(name, args, math.radians)
                         )
                     )(fn, name)
-                elif trig_mode == 'rad':
+                elif self.trig_mode == 'rad':
                     functions[name] = math_fns[name]
-                elif trig_mode == 'grad':
+                elif self.trig_mode == 'grad':
                     functions[name] = (
                         lambda orig_fn, name: lambda *args: orig_fn(
-                            *convert_args(
+                            *self.convert_args(
                                 name, args, lambda x: x * cmath.pi / 200
                             )
                         )
@@ -150,6 +179,8 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
 
         self._simple_eval = get_simple_eval(functions)
         self._function_names = list(functions.keys())
+        self._old_trig_mode = self.trig_mode
+        self._old_memory = self.memory.copy()
 
         keywords = [name.lower() for name in self._function_names]
         keywords.extend(['%', '//', '*', '/', '+', '-', '(', ')', '**'])
@@ -167,6 +198,11 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
         number.
 
         """
+        if (
+            self.trig_mode != self._old_trig_mode
+            or self.memory != self._old_memory
+        ):
+            self._initialize_fns()
         expression = expression.strip().lower()
         expression = self._keywords_regex.split(expression)
         expr = ''
