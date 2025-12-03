@@ -64,9 +64,15 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
             memory = CalculatorQueryHandler.memory
             if len(args) == num_args:
                 memory[index] = fn(*((memory[index],) + args))
-            return memory[index]
+                return memory[index]
+            return None
 
         return load
+
+    @staticmethod
+    def mem_clear():
+        CalculatorQueryHandler.memory = [0] * 10
+        return 0
 
     def convert_args(name, args, conversion):
         if any(arg.imag != 0 for arg in args):
@@ -117,8 +123,13 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
                     "m{}s".format(i): self.mem_load(i, op.sub),
                     "m{}m".format(i): self.mem_load(i, op.mul),
                     "m{}d".format(i): self.mem_load(i, op.truediv),
+                    "m{}e".format(i): self.mem_load(i, op.pow),
+                    "m{}r".format(i): self.mem_load(
+                        i, lambda x, y: op.pow(x, 1 / y)
+                    ),
                 }
             )
+        functions.update(mc=self.mem_clear)
 
         math_fns = {
             name: getattr(cmath, name)
