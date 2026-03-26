@@ -52,8 +52,7 @@ class CalculateAnythingExtension(Extension):
 class KeywordQueryEventListener(EventListener):
     def on_event(self, event, extension):
         query_nokw = event.get_argument() or ''
-        query = event.get_query() or ''
-        query = query.replace(event.get_keyword() + ' ', '', 1)
+        query = query_nokw
         mode = 'calculator'
         if event.get_keyword() == extension.preferences['time_kw']:
             query = TimeQueryHandler().keyword + query
