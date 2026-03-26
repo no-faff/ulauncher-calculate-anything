@@ -1,8 +1,8 @@
 {
   "required_api_version": "^2.0.0",
-  "name": "Calculate Anything",
-  "description": "An extension to calculate anything, from currency and unit conversion to percentage, time and complex calculations",
-  "developer_name": "Tilemachos Charalampous",
+  "name": "Calculate Anything (v6 fixed)",
+  "description": "Calculate anything: currency/unit conversion, percentages, time, trig and complex calculations. Ulauncher v6 compatible fork with deadlock fix and extra features.",
+  "developer_name": "No Faff (fork of Tilemachos Charalampous)",
   "icon": "calculate_anything/images/icon.svg",
   "options": {
     "query_debounce": 0.05
