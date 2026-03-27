@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import json
+from pathlib import Path
+
 from calculate_anything.utils.misc import images_dir
 from calculate_anything import logging
 from ulauncher.api.shared.action.CopyToClipboardAction import (
@@ -49,8 +52,24 @@ class CalculateAnythingExtension(Extension):
         self.subscribe(SystemExitEvent, SystemExitEventListener())
 
 
+# Workaround for Ulauncher 6 beta: PreferencesUpdateEvent doesn't fire in
+# API v2 compat mode. Reading from disk ensures saved preferences are used.
+# Can likely be removed once Ulauncher 6 is finalised.
+_PREFS_FILE = Path.home() / ".config" / "ulauncher" / "ext_preferences" / "com.github.tchar.ulauncher-albert-calculate-anything.json"
+
+
+def _refresh_preferences(extension):
+    """Update extension.preferences from disk."""
+    try:
+        data = json.loads(_PREFS_FILE.read_text())
+        extension.preferences.update(data.get("preferences", {}))
+    except (OSError, json.JSONDecodeError):
+        pass
+
+
 class KeywordQueryEventListener(EventListener):
     def on_event(self, event, extension):
+        _refresh_preferences(extension)
         query_nokw = event.get_argument() or ''
         query = query_nokw
         mode = 'calculator'
