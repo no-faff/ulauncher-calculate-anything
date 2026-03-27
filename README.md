@@ -44,10 +44,10 @@ Optional: [babel](https://github.com/python-babel/babel) for formatting results 
 
 Install the dependencies:
 ```bash
-/usr/bin/python3 -m pip install Pint simpleeval parsedatetime pytz
+pip install Pint simpleeval parsedatetime pytz
 
-# Optional
-/usr/bin/python3 -m pip install babel
+# Optional: better number formatting for non-English locales (decimal separators, currency symbols, etc.)
+pip install babel
 ```
 
 Open Ulauncher, go to Extensions > Add extension and paste:
