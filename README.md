@@ -2,13 +2,13 @@
 
 This is not my work. All credit goes to [tchar](https://github.com/tchar).
 
-[ulauncher-albert-calculate-anything](https://github.com/tchar/ulauncher-albert-calculate-anything) is the most starred extension at [ext.ulauncher.io](https://ext.ulauncher.io/) and there's a new [beta version 6 of Ulauncher](https://github.com/Ulauncher/Ulauncher/releases) which breaks it. Albert probably still works but I haven't tried it.
+[ulauncher-albert-calculate-anything](https://github.com/tchar/ulauncher-albert-calculate-anything) is the most starred extension at [ext.ulauncher.io](https://ext.ulauncher.io/) and there's a new [beta version 6 of Ulauncher](https://github.com/Ulauncher/Ulauncher/releases) which breaks it (Albert probably still works but I haven't tried it).
 
-It hasn't been updated since 2024, so I just got Claude Opus 4.6 to fix it.
+The extension hasn't been updated since 2024, so I just got Claude Opus 4.6 to fix it.
 
 [![License](https://img.shields.io/github/license/no-faff/ulauncher-calculate-anything?color=%23007ec6)](LICENSE)
 
-An [Ulauncher](https://ulauncher.io/) extension to calculate things like currency, time, percentages, units, complex equations, base-n expressions and more.
+A [Ulauncher](https://ulauncher.io/) extension to calculate things like currency, time, percentages, units, complex equations, base-n expressions and more.
 
 See [Features](#features) for supported features, [Contents](#contents) for installation instructions and more.
 
