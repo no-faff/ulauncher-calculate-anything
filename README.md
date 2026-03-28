@@ -12,6 +12,10 @@ An [Ulauncher](https://ulauncher.io/) extension to calculate things like currenc
 
 See [Features](#features) for supported features, [Contents](#contents) for installation instructions and more.
 
+## Demo
+
+![Ulauncher Demo](misc/demo-ulauncher.gif)
+
 ## Features
 
 Calculator for Anything
