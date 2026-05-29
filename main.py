@@ -55,7 +55,13 @@ class CalculateAnythingExtension(Extension):
 # Workaround for Ulauncher 6 beta: PreferencesUpdateEvent doesn't fire in
 # API v2 compat mode. Reading from disk ensures saved preferences are used.
 # Can likely be removed once Ulauncher 6 is finalised.
-_PREFS_FILE = Path.home() / ".config" / "ulauncher" / "ext_preferences" / "com.github.tchar.ulauncher-albert-calculate-anything.json"
+_PREFS_FILE = (
+    Path.home()
+    / ".config"
+    / "ulauncher"
+    / "ext_preferences"
+    / "com.github.tchar.ulauncher-albert-calculate-anything.json"
+)
 
 
 def _refresh_preferences(extension):
