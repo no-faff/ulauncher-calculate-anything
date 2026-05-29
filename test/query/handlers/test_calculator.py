@@ -328,8 +328,11 @@ def test_missing_simpleeval(test_spec):
     # Allow CalculatorQueryHandler to be reinstantiated
 
     with calculator_no_simpleeval(), reset_instance(CalculatorQueryHandler):
-        # Set stupid StupidEval as SimpleEval
-        assert isinstance(CalculatorQueryHandler()._simple_eval, StupidEval)
+        # Functions and the simple eval are initialised lazily on first
+        # parse, so trigger it before checking the StupidEval fallback.
+        handler = CalculatorQueryHandler()
+        handler._initialize_fns()
+        assert isinstance(handler._simple_eval, StupidEval)
         query_test_helper(CalculatorQueryHandler, test_spec)
         query_test_helper(MultiHandler, test_spec, raw=True)
         query_test_helper(MultiHandler, test_spec, raw=False, only_qr=True)
