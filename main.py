@@ -54,13 +54,16 @@ class CalculateAnythingExtension(Extension):
 
 # Workaround for Ulauncher 6 beta: PreferencesUpdateEvent doesn't fire in
 # API v2 compat mode. Reading from disk ensures saved preferences are used.
+# The extension id (and so the prefs filename) is the install directory
+# name, so this works regardless of the installed extension id.
 # Can likely be removed once Ulauncher 6 is finalised.
+_EXT_ID = Path(__file__).parent.name
 _PREFS_FILE = (
     Path.home()
     / ".config"
     / "ulauncher"
     / "ext_preferences"
-    / "com.github.tchar.ulauncher-albert-calculate-anything.json"
+    / "{}.json".format(_EXT_ID)
 )
 
 
