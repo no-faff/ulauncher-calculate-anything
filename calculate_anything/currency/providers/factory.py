@@ -1,5 +1,6 @@
 from typing import Dict, List
 from calculate_anything.currency.providers import FixerIOCurrencyProvider
+from calculate_anything.currency.providers.combined import CombinedCurrencyProvider
 from calculate_anything.currency.providers.base import (
     CurrencyProvider,
     _MockCurrencyProvider,
@@ -13,7 +14,7 @@ __all__ = ['CurrencyProviderFactory']
 class CurrencyProviderFactory:
     providers: Dict[str, CurrencyProvider] = {
         'fixerio': FixerIOCurrencyProvider,
-        'internal': _MockCurrencyProvider,
+        'internal': CombinedCurrencyProvider,
     }
 
     @staticmethod

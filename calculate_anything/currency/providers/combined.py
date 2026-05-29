@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 class CombinedCurrencyProvider(ApiKeyCurrencyProvider):
-    def __init__(self) -> None:
+    def __init__(self, api_key: str = None) -> None:
         super().__init__()
         free_providers = [
             ECBCurrencyProvider(),
