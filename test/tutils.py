@@ -254,6 +254,21 @@ def temp_file(*filenames, sleep=0):
         raise exc
 
 
+def _stop_instance_quietly(instance):
+    # Release resources (open sqlite connections, threads) before an
+    # instance is discarded, so they are not left to the garbage
+    # collector. Python 3.13 turns the resulting ResourceWarning into a
+    # test error.
+    if instance is None:
+        return
+    stop = getattr(instance, 'stop', None)
+    if callable(stop):
+        try:
+            stop()
+        except Exception:
+            pass
+
+
 @contextmanager
 def reset_instance(*classes):
     old_instances = {}
@@ -271,6 +286,7 @@ def reset_instance(*classes):
         exc = e
 
     for cls in classes:
+        _stop_instance_quietly(Singleton._instances.get(cls))
         del Singleton._instances[cls]
         if cls in old_instances:
             Singleton._instances[cls] = old_instances[cls]
