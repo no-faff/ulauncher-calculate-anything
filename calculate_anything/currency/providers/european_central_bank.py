@@ -98,6 +98,7 @@ class ECBCurrencyProvider(FreeCurrencyProvider):
                 response_code = response.getcode()
         except HTTPError as e:
             response_code = e.code
+            e.close()
         except Exception as e:
             self.had_error = True
             msg = 'Could not connect: {}'.format(e)

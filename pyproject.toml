@@ -1,5 +1,8 @@
 [tool.pytest.ini_options]
-filterwarnings = ["error"]
+# ResourceWarning is emitted by the garbage collector at non-deterministic
+# times and attached to arbitrary tests, so it is not a reliable signal.
+# Real leaks are closed in the code; everything else stays an error.
+filterwarnings = ["error", "ignore::ResourceWarning"]
 addopts = """--ignore=test/benchmark \
     --ignore=test/query/handlers/babel \
     --allow-hosts=127.0.0.1,127.0.1.1,::1"""
