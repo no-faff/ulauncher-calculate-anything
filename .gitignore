@@ -142,3 +142,4 @@ CLAUDE.md
 HANDOFF.md
 exports/
 non-repo-files/
+.dependencies/
