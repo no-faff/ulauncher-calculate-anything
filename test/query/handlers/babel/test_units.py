@@ -111,8 +111,8 @@ test_spec_units_simple = [
             get_unit_result(Q)(
                 '1 centimeter to meter',
                 approxunits(Q(0.01, 'meter')),
-                '0.01 meters',
-                '1 centimeter = 0.01 meters • [length]',
+                '0.01 meter',
+                '1 centimeter = 0.01 meter • [length]',
             ),
         ],
     },
@@ -148,7 +148,7 @@ test_spec_units_simple = [
                 '5400 second to hour',
                 approxunits(Q(1.5, 'hour')),
                 '1.5 hours',
-                '1 second = 0.000277778 hours • [time]',
+                '1 second = 0.000277778 hour • [time]',
             ),
         ],
     },
@@ -159,7 +159,7 @@ test_spec_units_simple = [
             get_unit_result(Q)(
                 '150000000 byte to megabyte',
                 approxunits(Q(150, 'megabyte')),
-                '150 megabyte',
+                '150 megabytes',
                 '',
             ),
         ],
@@ -209,29 +209,29 @@ test_spec_units_multi = [
             get_unit_result(Q)(
                 '10 centimeter to meter',
                 approxunits(Q(0.1, 'meter')),
-                '0.1 meters',
-                '1 centimeter = 0.01 meters • [length]',
+                '0.1 meter',
+                '1 centimeter = 0.01 meter • [length]',
                 order=0,
             ),
             get_unit_result(Q)(
                 '10 centimeter to inch',
                 approxunits(Q(3.937, 'inch')),
                 '3.93701 inches',
-                '1 centimeter = 0.393701 inches • [length]',
+                '1 centimeter = 0.393701 inch • [length]',
                 order=1,
             ),
             get_unit_result(Q)(
                 '10 centimeter to foot',
                 approxunits(Q(0.3281, 'foot')),
-                '0.328084 feet',
-                '1 centimeter = 0.0328084 feet • [length]',
+                '0.328084 foot',
+                '1 centimeter = 0.0328084 foot • [length]',
                 order=2,
             ),
             get_unit_result(Q)(
                 '10 centimeter to kilometer',
                 approxunits(Q(0.0001, 'kilometer')),
-                '0.0001 kilometers',
-                '1 centimeter = 1e-05 kilometers • [length]',
+                '0.0001 kilometer',
+                '1 centimeter = 1e-05 kilometer • [length]',
                 order=3,
             ),
         ],
@@ -243,32 +243,32 @@ test_spec_units_multi = [
             get_unit_result(Q)(
                 '0.547 kilometer / hour to inch / minute',
                 approxunits(Q(358.92, 'inch / minute')),
-                '358.924 inch / minute',
-                '1 kilometer / hour = '
-                '656.168 inch / minute • [length / time]',
+                '358.924 inches per minute',
+                '1 kilometer per hour = '
+                '656.168 inches per minute • [length / time]',
             ),
             get_unit_result(Q)(
                 '0.547 kilometer / hour to mile / second',
                 approxunits(Q(0.000094, 'mile / second')),
-                '9.44139e-05 mile / second',
-                '1 kilometer / hour = 0.000172603 '
-                'mile / second • [length / time]',
+                '9.44139e-05 mile per second',
+                '1 kilometer per hour = 0.000172603 '
+                'mile per second • [length / time]',
                 order=1,
             ),
             get_unit_result(Q)(
                 '0.547 kilometer / hour to centimeter / minute',
                 approxunits(Q(911.67, 'centimetre / minute')),
-                '911.667 centimeter / minute',
-                '1 kilometer / hour = '
-                '1666.67 centimeter / minute • [length / time]',
+                '911.667 centimeters per minute',
+                '1 kilometer per hour = '
+                '1666.67 centimeters per minute • [length / time]',
                 order=2,
             ),
             get_unit_result(Q)(
                 '0.547 kilometer / hour to foot / second',
                 approxunits(Q(0.4985, 'foot / second')),
-                '0.498505 foot / second',
-                '1 kilometer / hour = 0.911344 '
-                'foot / second • [length / time]',
+                '0.498505 foot per second',
+                '1 kilometer per hour = 0.911344 '
+                'foot per second • [length / time]',
                 order=3,
             ),
         ],
@@ -281,25 +281,25 @@ test_spec_units_multi = [
                 '100.0 megabyte * meter / second to '
                 'byte * centimeter / minute',
                 approxunits(Q(6e11, 'byte * centimeter / minute')),
-                '6e+11 byte * centimeter / minute',
-                '1 megabyte * meter / second = '
-                '6e+09 byte * centimeter / minute • [length / time]',
+                '6e+11 byte * centimeters per minute',
+                '1 megabyte * meter per second = '
+                '6e+09 byte * centimeters per minute • [length / time]',
             ),
             get_unit_result(Q)(
                 '100.0 megabyte * meter / second to '
                 'gigabyte * kilometer / hour',
                 approxunits(Q(0.36, 'gigabyte * kilometer / hour')),
-                '0.36 gigabyte * kilometer / hour',
-                '1 megabyte * meter / second = '
-                '0.0036 gigabyte * kilometer / hour • [length / time]',
+                '0.36 gigabyte * kilometer per hour',
+                '1 megabyte * meter per second = '
+                '0.0036 gigabyte * kilometer per hour • [length / time]',
                 order=1,
             ),
             get_unit_result(Q)(
                 '100.0 megabyte * meter / second to inch * petabyte / day',
                 approxunits(Q(0.34015748, 'inch * petabyte / day')),
-                '0.340157 inch * petabyte / day',
-                '1 megabyte * meter / second = '
-                '0.00340157 inch * petabyte / day • [length / time]',
+                '0.340157 inch * petabyte per day',
+                '1 megabyte * meter per second = '
+                '0.00340157 inch * petabyte per day • [length / time]',
                 order=2,
             ),
         ],
@@ -344,8 +344,8 @@ test_spec_units_mode_crazy = [
             get_unit_result(Q)(
                 '1 centimeter to meter',
                 approxunits(Q(0.01, 'meter')),
-                '0.01 meters',
-                '1 centimeter = 0.01 meters • [length]',
+                '0.01 meter',
+                '1 centimeter = 0.01 meter • [length]',
             ),
             get_unit_result(Q)(
                 '1 centimolar to molar',

@@ -3,8 +3,9 @@
 # times and attached to arbitrary tests, so it is not a reliable signal.
 # Real leaks are closed in the code; everything else stays an error.
 filterwarnings = ["error", "ignore::ResourceWarning"]
+# The babel vs plain unit suite is selected per-environment by
+# test/query/handlers/conftest.py, depending on whether babel is importable.
 addopts = """--ignore=test/benchmark \
-    --ignore=test/query/handlers/babel \
     --allow-hosts=127.0.0.1,127.0.1.1,::1"""
 
 [tool.coverage.run]
@@ -67,7 +68,7 @@ legacy_tox_ini = """
 skipsdist = true
 minversion = 3.24.1
 recreate = false
-envlist = clean,linting,codestyle,py{37,38,39,310,311},babel_py{37,38,39,310,311},coverage,benchmark
+envlist = clean,linting,codestyle,py{310,311,312,313,314}-{babel,nobabel},coverage,benchmark
 
 [testenv:clean]
 deps = -r{toxinidir}/requirements/test-requirements.txt
@@ -90,57 +91,17 @@ commands =
     coverage html
     coverage xml
 
+# babel is a core dependency, so the default (babel) factor tests the
+# babel-aware path. The nobabel factor uninstalls it to exercise the
+# import-failure fallback. The conftest picks the matching unit suite.
 [testenv]
 platform = linux2?|darwin|win32
 deps =
     -r{toxinidir}/requirements/requirements.txt
     -r{toxinidir}/requirements/test-requirements.txt
+commands_pre =
+    nobabel: - pip uninstall -y Babel
 commands = coverage run
-
-[testenv:babel_py37]
-platform = linux2?|darwin
-basepython = python3.7
-deps = 
-    -r{toxinidir}/requirements/requirements.txt
-    -r{toxinidir}/requirements/test-requirements.txt
-    -r{toxinidir}/requirements/optional-requirements.txt
-commands = coverage run -m pytest {toxinidir}/test/query/handlers/babel
-
-[testenv:babel_py38]
-platform = linux2?|darwin
-basepython = python3.8
-deps = 
-    -r{toxinidir}/requirements/requirements.txt
-    -r{toxinidir}/requirements/test-requirements.txt
-    -r{toxinidir}/requirements/optional-requirements.txt
-commands = coverage run -m pytest {toxinidir}/test/query/handlers/babel
-
-[testenv:babel_py310]
-platform = linux2?|darwin
-basepython = python3.10
-deps = 
-    -r{toxinidir}/requirements/requirements.txt
-    -r{toxinidir}/requirements/test-requirements.txt
-    -r{toxinidir}/requirements/optional-requirements.txt
-commands = coverage run -m pytest {toxinidir}/test/query/handlers/babel
-
-[testenv:babel_py311]
-platform = linux2?|darwin
-basepython = python3.11
-deps = 
-    -r{toxinidir}/requirements/requirements.txt
-    -r{toxinidir}/requirements/test-requirements.txt
-    -r{toxinidir}/requirements/optional-requirements.txt
-commands = coverage run -m pytest {toxinidir}/test/query/handlers/babel
-
-[testenv:babel_py39]
-platform = linux2?|darwin
-basepython = python3.9
-deps = 
-    -r{toxinidir}/requirements/requirements.txt
-    -r{toxinidir}/requirements/test-requirements.txt
-    -r{toxinidir}/requirements/optional-requirements.txt
-commands = coverage run -m pytest {toxinidir}/test/query/handlers/babel
 
 [testenv:benchmark]
 basepython = python3.9
