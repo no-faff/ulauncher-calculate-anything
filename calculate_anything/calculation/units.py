@@ -72,20 +72,29 @@ class UnitsCalculation(Calculation):
 
     def _format_babel(self) -> Tuple[str, str]:
         _locale = locale.getlocale()[0]
+        # pint deprecated Quantity/Unit.format_babel in favour of the
+        # registry formatter. Use that so babel formatting keeps working on
+        # current pint, where the old call raises a DeprecationWarning (an
+        # error under the suite's -W error setting).
+        formatter = self.value._REGISTRY.formatter
 
         if not UnitsCalculation.is_strictly_dimensionless(self.value):
-            name = self.value.format_babel(locale=_locale, spec='g')
+            name = formatter.format_quantity_babel(
+                self.value, spec='g', locale=_locale
+            )
         else:
             name = '{:g}'.format(self.value.magnitude)
 
         if not self.unit_from.dimensionless:
-            unit_from_name = self.unit_from.format_babel(
-                locale=_locale, spec='g'
+            unit_from_name = formatter.format_unit_babel(
+                self.unit_from, locale=_locale
             )
         else:
             unit_from_name = '{:g}'.format(self.unit_from)
 
-        rate = self.rate.format_babel(locale=_locale, spec='g')
+        rate = formatter.format_quantity_babel(
+            self.rate, spec='g', locale=_locale
+        )
         if self.unit_from != self.unit_to:
             description = '1 {} = {}'.format(unit_from_name, rate)
         else:

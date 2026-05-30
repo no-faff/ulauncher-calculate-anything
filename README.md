@@ -31,9 +31,7 @@ Calculator for Anything
     - Base 2 (`bin`), Base 8 (`oct`), Base 10 (`dec`)
     - Supports functions: `or`, `xor`, `and`, `mod`, `div`, `+`, `-`, `/`  
 
-**Dependencies**: [simpleeval](https://github.com/danthedeckie/simpleeval), [pint](https://pypi.org/project/Pint/), [parsedatetime](https://pypi.org/project/parsedatetime/) and [pytz](https://pypi.org/project/pytz/)
-
-Optional: [babel](https://github.com/python-babel/babel) for formatting results in your locale.
+**Dependencies**: [simpleeval](https://github.com/danthedeckie/simpleeval), [pint](https://pypi.org/project/Pint/), [parsedatetime](https://pypi.org/project/parsedatetime/), [pytz](https://pypi.org/project/pytz/) and [babel](https://github.com/python-babel/babel) (locale-aware formatting of results)
 
 ## Contents
 
