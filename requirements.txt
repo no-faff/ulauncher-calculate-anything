@@ -1,1 +1,4 @@
-requirements/requirements.txt
+# Ulauncher 6 installs the extension's dependencies from this root file.
+# Keep the actual list in requirements/requirements.txt (CI and tox use it
+# too) and include it here so the two never drift.
+-r requirements/requirements.txt
