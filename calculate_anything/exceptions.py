@@ -30,6 +30,10 @@ class CurrencyProviderException(CurrencyException):
     order = -110
 
 
+class CurrencyFetchingException(CurrencyException):
+    order = -115
+
+
 # Exceptions for unit conversion
 
 

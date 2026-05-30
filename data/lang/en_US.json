@@ -80,6 +80,9 @@
     "currency-provider-error": "Currency Provider error. Did you set your API key?",
     "currency-provider-error-description": "Set your API key in the extension preferences",
 
+    "currency-fetching": "Fetching exchange rates...",
+    "currency-fetching-description": "The latest rates are loading and will appear shortly",
+
     "date-overflow": "Hey I'm not a time machine",
     "date-overflow-description": "I can't calculate dates in 1 million years, or March 32 ",
 
