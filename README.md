@@ -46,18 +46,12 @@ Optional: [babel](https://github.com/python-babel/babel) for formatting results 
 
 ## Install
 
-Install the dependencies:
-```bash
-pip install Pint simpleeval parsedatetime pytz
-
-# Optional: better number formatting for non-English locales (decimal separators, currency symbols, etc.)
-pip install babel
-```
-
 Open Ulauncher, go to Extensions > Add extension and paste:
 ```
 https://github.com/no-faff/ulauncher-calculate-anything
 ```
+
+The dependencies will automatically be installed by Ulauncher into a virtual environment.
 
 ## How to Setup
 
