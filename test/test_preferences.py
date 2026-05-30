@@ -79,6 +79,34 @@ def test_defaults(in_memory_cache, mock_currency_provider):
         CurrencyService().stop()
 
 
+def test_cache_pref_change_reconciles_update_thread(
+    in_memory_cache, mock_currency_provider
+):
+    with reset_instance(
+        Preferences,
+        LanguageService,
+        TimezoneService,
+        UnitsService,
+        CurrencyService,
+    ), in_memory_cache(), mock_providers(mock_currency_provider):
+        preferences = Preferences()
+        # First start with a cache duration runs the timed thread.
+        preferences.currency.enable_cache(100000)
+        preferences.commit()
+        assert CurrencyService().is_running is True
+
+        # A live change to None stops the thread; rates come on demand.
+        preferences.currency.disable_cache()
+        preferences.commit()
+        assert CurrencyService().is_running is False
+
+        # A live change back to a duration runs the timed thread again.
+        preferences.currency.enable_cache(100000)
+        preferences.commit()
+        assert CurrencyService().is_running is True
+        CurrencyService().stop()
+
+
 test_spec_normal_alts = [
     {
         'language': {'lang': 'en_US'},

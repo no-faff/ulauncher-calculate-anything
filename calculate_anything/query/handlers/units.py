@@ -21,6 +21,7 @@ from calculate_anything import logging
 from calculate_anything.utils import Singleton, is_types, images_dir
 from calculate_anything.regex import UNIT_QUERY_SPLIT_RE, UNIT_SPLIT_RE
 from calculate_anything.exceptions import (
+    CurrencyFetchingException,
     CurrencyProviderException,
     ExtendedException,
     MissingPintException,
@@ -374,4 +375,17 @@ class UnitsQueryHandler(QueryHandler, metaclass=Singleton):
                     len(items),
                 )
             )
+        currency_service = CurrencyService()
+        if (
+            unit_from_ureg_currency
+            and not added_currency
+            and currency_service.enabled
+            and not currency_service.cache_enabled
+            and not currency_service.provider_had_error
+        ):
+            # No rate yet and no stored cache: fetch on demand, off this
+            # thread, and show a placeholder while the first fetch loads.
+            currency_service.fetch_on_demand()
+            if currency_service.is_fetching:
+                items.append(CalculationError(CurrencyFetchingException()))
         return items

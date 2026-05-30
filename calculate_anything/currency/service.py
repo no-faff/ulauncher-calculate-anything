@@ -26,6 +26,11 @@ logger = logging.getLogger(__name__)
 
 API_CURRENCY_PROVIDERS = [FixerIOCurrencyProvider]
 
+# When the cache is disabled (set to None), rates are fetched on demand and
+# held only in memory. A fetch is reused for this many seconds so back-to-back
+# conversions do not hit the providers on every keystroke.
+ON_DEMAND_TTL = 60.0
+
 
 class UpdateThread(Thread):
     def __init__(
@@ -141,6 +146,8 @@ class CurrencyService(metaclass=Singleton):
         self._enabled = True
         self._thread = None
         self._update_callbacks = []
+        self._on_demand_fetching = False
+        self._on_demand_last_fetch = 0.0
 
     @property
     def lock(self) -> RLock:
@@ -251,6 +258,49 @@ class CurrencyService(metaclass=Singleton):
         for callback in self._update_callbacks:
             with safe_operation():
                 callback(data, had_error)
+
+    @property
+    @with_lock
+    def is_fetching(self) -> bool:
+        '''True while an on-demand (no-cache) fetch is in flight.'''
+        return self._on_demand_fetching
+
+    def fetch_on_demand(self) -> 'CurrencyService':
+        '''Fetch rates once in the background when the cache is disabled.
+
+        Non-blocking: the network request runs on a short-lived thread so it
+        never blocks the query. Only one fetch runs at a time, and a fetch is
+        skipped if rates were refreshed within the last ON_DEMAND_TTL seconds,
+        so back-to-back conversions reuse the in-memory rates.
+        '''
+        with self._lock:
+            # On-demand only applies when no cache thread is running, i.e.
+            # cache set to None. Cached mode (and the forced test path) run
+            # the UpdateThread instead, so leave those alone.
+            if self._cache.enabled or not self._enabled or self._is_running:
+                return self
+            if self._on_demand_fetching:
+                return self
+            if time.time() - self._on_demand_last_fetch < ON_DEMAND_TTL:
+                return self
+            self._on_demand_fetching = True
+        Thread(target=self._run_on_demand, daemon=True).start()
+        return self
+
+    def _run_on_demand(self) -> None:
+        currency_rates = {}
+        try:
+            currency_rates = self._provider.request_currencies(force=True)
+        except Exception as e:
+            logger.exception('On-demand currency fetch failed: {}'.format(e))
+        with self._lock:
+            had_error = self._provider.had_error
+        with safe_operation():
+            self._update_callback(currency_rates, had_error)
+        with self._lock:
+            if not had_error and currency_rates:
+                self._on_demand_last_fetch = time.time()
+            self._on_demand_fetching = False
 
     @with_lock
     def start(self, force: bool = False) -> 'CurrencyService':

@@ -251,6 +251,14 @@ class CurrencyPreferences(_Preferences):
                 CurrencyService().enable_cache(value)
             else:
                 CurrencyService().disable_cache()
+            # On a live preference change (first start is handled by
+            # _pre_commit), reconcile the update thread: a cache duration runs
+            # the timed thread, None stops it so rates are fetched on demand.
+            if self._commits > 0:
+                if value > 0:
+                    CurrencyService().start(force=True)
+                else:
+                    CurrencyService().stop()
         elif key == 'add_provider':
             CurrencyService().remove_provider(value)
             CurrencyService().add_provider(value)

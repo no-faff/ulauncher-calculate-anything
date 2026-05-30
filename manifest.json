@@ -95,10 +95,10 @@
       "id": "cache",
       "type": "select",
       "name": "Currency Cache",
-      "description": "Cache currency exchange rates for a specified duration. None turns currency conversion off.",
+      "description": "Cache currency exchange rates for a specified duration. None fetches fresh rates on demand without storing a cache.",
       "default_value": "86400",
       "options": [
-        {"value": "0", "text": "None (currency off)"},
+        {"value": "0", "text": "None"},
         {"value": "86400", "text": "1 day"},
         {"value": "604800", "text": "1 Week"},
         {"value": "1209600", "text": "2 Weeks"},

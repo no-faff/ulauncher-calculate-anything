@@ -15,6 +15,7 @@ from calculate_anything.utils import images_dir
 from calculate_anything.exceptions import (
     BaseFloatingPointException,
     BooleanComparisonException,
+    CurrencyFetchingException,
     CurrencyProviderException,
     DateOverflowException,
     ExtendedException,
@@ -265,6 +266,21 @@ def currency_provider_error_query_result(
     )
 
 
+def currency_fetching_query_result(
+    calculation: CalculationError,
+) -> QueryResult:
+    icon = calculation.error.extra.get('icon') or images_dir('convert.svg')
+    translator = LanguageService().get_translator('errors')
+    return QueryResult(
+        icon=icon,
+        name=translator('currency-fetching'),
+        description=translator('currency-fetching-description'),
+        clipboard='',
+        error=calculation.error,
+        order=calculation.order,
+    )
+
+
 def zero_division_error_query_result(
     calculation: CalculationError,
 ) -> QueryResult:
@@ -309,6 +325,7 @@ _HANDLERS: Dict[
     DateOverflowException: date_overflow_error_query_result,
     MisparsedDateTimeException: misparsed_time_exception,
     CurrencyProviderException: currency_provider_error_query_result,
+    CurrencyFetchingException: currency_fetching_query_result,
     BooleanComparisonException: boolean_comparison_error_query_result,
     BooleanPercetageException: boolean_percentage_error_query_result,
     WrongBaseException: wrong_base_exception_query_result,
