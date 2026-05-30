@@ -103,6 +103,7 @@ class FixerIOCurrencyProvider(ApiKeyCurrencyProvider):
                 response_code = response.getcode()
         except HTTPError as e:
             response_code = e.code
+            e.close()
         except Exception as e:
             msg = 'Could not connect: {}'.format(e)
             logger.exception(e)

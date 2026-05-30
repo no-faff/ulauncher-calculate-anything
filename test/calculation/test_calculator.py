@@ -4,12 +4,12 @@ from calculate_anything.calculation import CalculatorCalculation
 
 
 def test_calculation_precision():
-    value = complex(1.0, 0.0000000000001j)
+    value = complex(1.0, 0.0000000000001)
     calculation = CalculatorCalculation(value, '')
     assert calculation.value == 1
     assert isinstance(calculation.value, int)
 
-    value = complex(1.5124, 0.0000000000001j)
+    value = complex(1.5124, 0.0000000000001)
     calculation = CalculatorCalculation(value, '')
     assert calculation.value == pytest.approx(1.5124)
     assert isinstance(calculation.value, float)
