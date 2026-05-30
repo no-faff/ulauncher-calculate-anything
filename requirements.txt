@@ -1,1 +1,1 @@
-/home/karl/projects/github/ulauncher-calculate-anything/requirements/requirements.txt
+requirements/requirements.txt
