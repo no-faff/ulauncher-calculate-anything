@@ -47,9 +47,6 @@ class UnitsQueryHandler(QueryHandler, metaclass=Singleton):
         if not has_currency:
             return []
         currency_service = CurrencyService()
-        # No stored cache (None): fetch rates on demand, off the query thread.
-        if currency_service.enabled and not currency_service.cache_enabled:
-            currency_service.fetch_on_demand()
 
         currency_provider_had_error = (
             currency_service.enabled and currency_service.provider_had_error
@@ -385,7 +382,10 @@ class UnitsQueryHandler(QueryHandler, metaclass=Singleton):
             and currency_service.enabled
             and not currency_service.cache_enabled
             and not currency_service.provider_had_error
-            and currency_service.is_fetching
         ):
-            items.append(CalculationError(CurrencyFetchingException()))
+            # No rate yet and no stored cache: fetch on demand, off this
+            # thread, and show a placeholder while the first fetch loads.
+            currency_service.fetch_on_demand()
+            if currency_service.is_fetching:
+                items.append(CalculationError(CurrencyFetchingException()))
         return items
