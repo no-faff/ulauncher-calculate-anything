@@ -71,7 +71,11 @@ class UnitsCalculation(Calculation):
         )
 
     def _format_babel(self) -> Tuple[str, str]:
-        _locale = locale.getlocale()[0]
+        # Full locale string (e.g. en_GB.UTF-8), not locale.getlocale()[0]
+        # (en_GB). pint's babel number formatting calls setlocale with it, and
+        # the codeset-less form is not a valid locale on minimal systems such
+        # as CI runners, which makes babel formatting error and fall back.
+        _locale = locale.setlocale(locale.LC_CTYPE)
         # pint deprecated Quantity/Unit.format_babel in favour of the
         # registry formatter. Use that so babel formatting keeps working on
         # current pint, where the old call raises a DeprecationWarning (an
