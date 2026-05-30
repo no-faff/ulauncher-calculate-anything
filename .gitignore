@@ -138,7 +138,3 @@ dmypy.json
 cython_debug/
 
 .vscode
-CLAUDE.md
-HANDOFF.md
-exports/
-non-repo-files/
