@@ -1,10 +1,8 @@
 # <img src="calculate_anything/images/icon.svg" alt="drawing" width="25"/> Calculate Anything (v6 fixed)
 
-This is not my work. All credit goes to [tchar](https://github.com/tchar).
-
 [ulauncher-albert-calculate-anything](https://github.com/tchar/ulauncher-albert-calculate-anything) is the most starred extension at [ext.ulauncher.io](https://ext.ulauncher.io/) and there's a new [beta version 6 of Ulauncher](https://github.com/Ulauncher/Ulauncher/releases) which breaks it (Albert probably still works but I haven't tried it).
 
-The extension hasn't been updated since 2024, so I just got Claude Opus 4.6 to fix it.
+That extension hasn't been updated since 2024, so I got Claude Opus 4.6/4.7/4.8 to fix it (far from as simple as it sounds!), with help along the way from [kallegrens](https://github.com/no-faff/ulauncher-calculate-anything/commits?author=kallegrens).
 
 [![License](https://img.shields.io/github/license/no-faff/ulauncher-calculate-anything?color=%23007ec6)](LICENSE)
 
@@ -27,7 +25,7 @@ Calculator for Anything
 - `Percentage Calculator` Calculate percentages see [Percentages](#percentages) for examples.
     - Supports all expressions that Normal Calculator and Complex Calculator Support
 - `Base N Calculator`: Calculate numbers and expressions to other number base. See [Base N Calculator](#base-n-calculator) for examples.
-    - Base 16 (`hex`): Calculates expression to decimal, biniary, octal, color (i.e `RGB`, `YSV`, etc), Bytes (representation of `string`)
+    - Base 16 (`hex`): Calculates expression to decimal, binary, octal, colour (e.g `RGB`, `HSV`) and the byte representation of the input string
     - Base 2 (`bin`), Base 8 (`oct`), Base 10 (`dec`)
     - Supports functions: `or`, `xor`, `and`, `mod`, `div`, `+`, `-`, `/`  
 
@@ -85,15 +83,15 @@ Edit `Currency Cache` in the extension preferences.
 ### Default currency
 
 In the preferences you can define a comma separated list of default currencies to show when typing conversion without target unit/currency.
-Defaults to `USD,EUR,CAD,GBP,AUD`
+Defaults to `USD,EUR,GBP,CAD`
 
 Edit in `Default Currencies` preferences.
 
 ### Default cities
 
-In the preferences you can define a comma separated list of default cities when using the time command
+In the preferences you can define a comma separated list of default cities when using the time command.
 
-Edit in `Default Currencies` preferences.
+Edit in `Default Cities` preferences.
 
 ### Units Conversion Mode
 
@@ -107,47 +105,75 @@ See [Currency](#crazy-conversion) and [Units](#crazy-conversion-1) for more
 
 Edit in `Units Conversion mode` preferences.
 
+### Imperial/US units
+
+Many units share a name but differ by system: a US pint is 0.47 litres, an
+imperial (British) pint is 0.57. The `Imperial/US units` preference decides
+what bare names like `pint`, `gallon`, `quart` and `fluid_ounce` mean.
+
+- **US** (default): bare `pint` is the US pint, matching the underlying library.
+- **Imperial**: bare `pint` is the imperial pint, so `= 26 pints to litres`
+  gives 14.77 rather than 12.30.
+
+You can always be explicit regardless of the setting. `us_pint`, `uk_pint`,
+`imp_pint` and `imperial_pint` all work (in any case), as do the `us_`, `uk_`
+and `imp_` forms of `gallon`, `quart`, `fluid_ounce`, `gill`, `cup`, `bushel`,
+`peck` and `ton`.
+
 ### Show Empty Placeholder
 
 Default is `No`. Set to `Yes` to show an empty placeholder when extension doesn't return anything.
 
 ### Commands and Syntax
 
-To calculate/convert anything you can use the keywords
-- `=`: For currency, units and calculator
-- `time`: For time calculations
-- `dec`/`hex`/`bin`/`oct`: For base-n and calculations
+Every mode is a keyword. Type the keyword, then a **space**, then your input.
+The space matters: `=5+5` does nothing, `= 5+5` calculates.
 
-You can go directly to [examples](#examples) or use the ones from the demo
+- `=`: currency, units, percentages and the calculator
+- `time`: time, timezones and date arithmetic
+- `dec` / `hex` / `bin` / `oct`: base-n conversion and calculation
 
-To convert currency type your keyword and then
+Press **Enter** on any result to copy it to the clipboard.
 
-- `AMOUNT CURRENCY` to get conversion in the default currencies set in the preferences (requires cache)
-- `AMOUNT CURRENCY in(or to) CURRENCY1,CURRENCY2,CURRENCY3`
-- `CURRENCY in(or to) CURRENCY1,CURRENCY2,CURRENCY3`
+**Currency** (`=` then)
 
-To convert units use
+- `AMOUNT CURRENCY` for the default currencies set in preferences (requires cache)
+- `AMOUNT CURRENCY to CURRENCY1,CURRENCY2,CURRENCY3`
+- `CURRENCY to CURRENCY1,CURRENCY2,CURRENCY3`
 
-- `AMOUNT UNIT in(or to) UNIT1,UNIT2,UNIT3`
-- `UNIT in(or to) UNIT1,UNIT2,UNIT3`
+**Units** (`=` then)
 
-Comma separated units and currencies can have spaces between them.
+- `AMOUNT UNIT to UNIT1,UNIT2,UNIT3`
+- `UNIT to UNIT1,UNIT2,UNIT3`
 
-For time you can use the time keyword with a syntax
+Use `to`, not `in`, to separate the source from the target. `in` is reserved
+because it is the symbol for inches (so `5 in to cm` means 5 inches in
+centimetres). Comma separated targets can have spaces between them.
 
-- `time` To get the current time plus the `default cities` you defined in the preferences
-- `time at CITY,[COUNTRY|COUNTRY CODE|STATE CODE]` to get the current time for a specified city
-- `time + AMOUNT [MONTH|YEAR|WEEK|DAY|HOUR|MINUTE|SECOND] [+ AMOUNT ...] [at CITY, [COUNTRY|COUNTRY CODE|STATE CODE]]` to get the time after the calculation at a specified city.
+Unit names are case-insensitive, **except** SI symbols where the case carries
+the prefix (`m` is milli, `M` is mega). So `mW` is milliwatts and `MW`
+megawatts, `mPa` millipascals and `MPa` megapascals. Type the correct case for
+those to be exact; a wrongly-cased symbol falls back to whichever matches,
+usually the smaller one.
 
-To calculate an expression just type your expression as in the demo
- - You can use functions such as `tan`,`atan`,`asinh`
- - You can use complex numbers too like `1 + 5i`
+**Percentages** (`=` then)
 
-To calculate percentages you can use one of the following
-- `AMOUNT1% of AMOUNT2` to calculate the AMOUNT1 percent of AMOUNT2
-- `AMOUNT1 as % of AMOUNT2` to calculate AMOUNT1 as a percentage of AMOUNT2
+- `AMOUNT1% of AMOUNT2` for AMOUNT1 percent of AMOUNT2
+- `AMOUNT1 as % of AMOUNT2` for AMOUNT1 as a percentage of AMOUNT2
 
-If you select one results it will be copied to clipboard.
+**Calculator** (`=` then) just type the expression
+
+- functions such as `tan`, `atan`, `asinh`
+- complex numbers such as `1 + 5i`
+
+**Time** (`time` then)
+
+- `time` the current time plus the default cities from preferences
+- `time at CITY,[COUNTRY|COUNTRY CODE|STATE CODE]` the time in a given city
+- `time + AMOUNT [MONTH|YEAR|WEEK|DAY|HOUR|MINUTE|SECOND] [+ AMOUNT ...] [at CITY, [COUNTRY|COUNTRY CODE|STATE CODE]]` time arithmetic, optionally in a given city
+
+**Base-n** (`dec` / `hex` / `bin` / `oct` then) a number or expression, e.g.
+`hex ff`, `dec 255`, `bin 1010 + 1`.
 
 ## Examples
 
@@ -189,7 +215,7 @@ Be careful to use date timespans like `2 years 5 months 2 weeks 3 days 1 hour 4 
 
 #### **Specifying a target city**
 
-You can use all the commands above followed by `at CITY NAME` or `at CITY NAME, COUNTRY NAME|COUNTRY CODE|STATE CODE` to get te result in your local time as well as the specified city
+You can use all the commands above followed by `at CITY NAME` or `at CITY NAME, COUNTRY NAME|COUNTRY CODE|STATE CODE` to get the result in your local time as well as the specified city
 - `time at Prague`
 - `time + 2 hours at Madrid`
 - `time + 2 hours at Vancouver, CA`: (There are two Vancouvers, so by specifying CA as returns the Canadian Vancouver)
@@ -231,15 +257,15 @@ The units supported are all units that [pint](https://github.com/hgrecco/pint) s
 #### **Advanced Conversion**
 - Convert kilometers per meter to centimeters per minute, kilometers per minute, inches per second and centimeters per second.
     - `20 km/h to cm/min, km/minute, in/s, cm/sec`
-- Convert kilowhats per second to horsepower per hour and megawatts per second
-    - `10 kw/sec to hp/h, mw/s`
+- Convert kilowatts per second to horsepower per hour and megawatts per second
+    - `10 kw/sec to hp/h, MW/s`
 - Convert meters per squared second to kilometers per squared hour
     - `10 m/s^2 to km/h^2`
 - Convert megabytes per second to gigabytes per hour
     - `10 mb/s to gb/h`
 
-**You can lieterally convert anything if the apropriate units match**
-- Convert kilometer * centimeter * second per gibabyte to inches * meter * hour per megabyte
+**You can literally convert anything if the appropriate units match**
+- Convert kilometer * centimeter * second per gigabyte to inches * meter * hour per megabyte
     - `10 km * cm * s / gb to inches * meter * hour / mb`
 
 #### **Crazy Conversion**
