@@ -37,3 +37,10 @@ the `main` branch.
   It now swaps in only once complete and keeps the previous database on failure.
 - babel formatting on systems where only the `.UTF-8` form of a locale is
   generated; it previously errored and fell back to non-localised output. (#6)
+
+### Documentation
+
+- Expanded and corrected the README: per-mode command syntax, the
+  keyword-then-space rule, `to` (not `in`) for conversions, the SI symbol case
+  rule, base-n syntax and the imperial/US setting, plus fixes to the default
+  currencies list and several typos.
