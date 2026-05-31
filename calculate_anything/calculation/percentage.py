@@ -29,9 +29,11 @@ class PercentageCalculation(CalculatorCalculation):
         query: str,
         amounts: Tuple[CalculatorCalculation, CalculatorCalculation] = (),
         order: int = 0,
+        operation: str = '+',
     ):
         super().__init__(value, query=query, order=order)
         self.amounts = amounts
+        self.operation = operation
 
     def _get_extra_descriptions(self) -> List[str]:
         translator = LanguageService().get_translator('calculator')
@@ -49,8 +51,8 @@ class PercentageCalculation(CalculatorCalculation):
 
     def to_query_result(self) -> QueryResult:
         name = self.format()
-        description = '({}) + ({:})%'.format(
-            self.amounts[0].format(), self.amounts[1].format()
+        description = '({}) {} ({:})%'.format(
+            self.amounts[0].format(), self.operation, self.amounts[1].format()
         )
 
         extra_descriptions = self._get_extra_descriptions()

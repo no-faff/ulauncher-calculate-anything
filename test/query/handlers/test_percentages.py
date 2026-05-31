@@ -369,6 +369,30 @@ test_spec_calc = [
         ],
     },
     {
+        # Subtraction must read as a minus, not a plus, in the description.
+        'query': '= 10 - 10%',
+        'results': [
+            {
+                'result': {
+                    'value': 9,
+                    'query': '(10) - (10)%',
+                    'error': None,
+                    'order': 0,
+                },
+                'query_result': {
+                    'icon': images_dir('percent.svg'),
+                    'name': '9',
+                    'description': '(10) - (10)%',
+                    'clipboard': '9',
+                    'error': None,
+                    'order': 0,
+                    'value': 9,
+                    'value_type': int,
+                },
+            }
+        ],
+    },
+    {
         # Complex test
         'query': '= sqrt(1) + 2 + 5i + 125 + 5i + 3.5% ',
         'results': [

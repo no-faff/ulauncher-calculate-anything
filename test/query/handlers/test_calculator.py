@@ -197,6 +197,33 @@ test_spec_calculator = [
         ],
     },
     {
+        # Equality must compare the whole complex value, not just the real
+        # part: 2i and 3i are not equal.
+        'query': '= 2*i = 3*i',
+        'results': [
+            {
+                'result': {
+                    'value': False,
+                    'query': '2*1j == 3*1j',
+                    'error': None,
+                    'order': 0,
+                },
+                'query_result': {
+                    'icon': images_dir('icon.svg'),
+                    'name': 'false',
+                    'description': '2 × i = 3 × i ({})'.format(
+                        tr_calc('result-boolean').capitalize()
+                    ),
+                    'clipboard': 'false',
+                    'error': None,
+                    'order': 0,
+                    'value': False,
+                    'value_type': bool,
+                },
+            }
+        ],
+    },
+    {
         # Test rejects 1
         'query': '= 1 % of 2',
         'results': [],

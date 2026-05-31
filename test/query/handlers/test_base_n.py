@@ -27,13 +27,13 @@ def result_for_base_n(base, value, query, order):
         name = str(value)
         description = 'DEC'
     elif base == 16:
-        name = hex(value)[2:]
+        name = format(value, 'x')
         description = 'HEX'
     elif base == 2:
-        name = bin(value)[2:]
+        name = format(value, 'b')
         description = 'BIN'
     elif base == 8:
-        name = oct(value)[2:]
+        name = format(value, 'o')
         description = 'OCT'
 
     return {
@@ -233,6 +233,17 @@ test_spec_base10 = [
                 '8 xor 11 + 9 and 1 + (15 or 16)',
                 3,
             ),
+        ],
+    },
+    {
+        # A negative result keeps its sign in every base; bin/oct/hex used to
+        # drop the sign and a digit (-0b10 sliced to b10).
+        'query': 'dec 3 - 5',
+        'results': [
+            result_for_base_n(10, -2, '3 - 5', 0),
+            result_for_base_n(16, -2, '3 - 5', 1),
+            result_for_base_n(2, -2, '3 - 5', 2),
+            result_for_base_n(8, -2, '3 - 5', 3),
         ],
     },
     {

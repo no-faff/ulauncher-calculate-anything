@@ -69,7 +69,9 @@ class Base10Calculation(BaseNCalculation):
 
 class Base2Calculation(BaseNCalculation):
     def format(self) -> str:
-        return bin(int(self.value))[2:]
+        # format() carries the sign; bin()/oct()/hex() prefix with 0b/0o/0x and
+        # slicing [2:] would eat the sign of a negative result (-0b10 -> b10).
+        return format(int(self.value), 'b')
 
     def get_description(self) -> str:
         return LanguageService().translate('bin', 'calculator').upper()
@@ -77,7 +79,7 @@ class Base2Calculation(BaseNCalculation):
 
 class Base8Calculation(BaseNCalculation):
     def format(self) -> str:
-        return oct(int(self.value))[2:]
+        return format(int(self.value), 'o')
 
     def get_description(self) -> str:
         return LanguageService().translate('oct', 'calculator').upper()
@@ -85,7 +87,7 @@ class Base8Calculation(BaseNCalculation):
 
 class Base16Calculation(BaseNCalculation):
     def format(self) -> str:
-        return hex(int(self.value))[2:]
+        return format(int(self.value), 'x')
 
     def get_description(self) -> str:
         return LanguageService().translate('hex', 'calculator').upper()

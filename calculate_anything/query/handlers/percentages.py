@@ -190,10 +190,15 @@ class PercentagesQueryHandler(QueryHandler, metaclass=Singleton):
         try:
             result = percentage.value * amount.value / 100
             result = amount.value + sign * result
+            operation = '+' if sign == 1 else '-'
             query_amount = amount.query
             query_percentage = percentage.query
-            query = '({}) + ({})%'.format(query_amount, query_percentage)
-            return PercentageCalculation(result, query, (amount, percentage))
+            query = '({}) {} ({})%'.format(
+                query_amount, operation, query_percentage
+            )
+            return PercentageCalculation(
+                result, query, (amount, percentage), operation=operation
+            )
         except Exception as e:  # pragma: no cover
             logger.exception(
                 'Got exception when calculating inverse percentage '

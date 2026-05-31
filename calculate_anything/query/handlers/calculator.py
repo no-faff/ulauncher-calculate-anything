@@ -336,13 +336,17 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
         result = True
         zipped_values = zip(values, values[1:], operators)
         for i, [value1, value2, operator] in enumerate(zipped_values):
-            # If it is an inequality and either of the results have imaginary
-            # part. Then mark it as error, let query be constructed and return
-            # a BooleanComparisonException
+            # Complex numbers have no ordering, so an inequality against an
+            # imaginary value is an error; the query is still built so the
+            # error can quote it.
             if operator in inequalities:
                 if value1.imag != 0 or value2.imag != 0:
                     inequality_error = True
-            result = result and op_dict[operator](value1.real, value2.real)
+                result = result and op_dict[operator](value1.real, value2.real)
+            else:
+                # Equality compares the whole value; comparing only the reals
+                # would read 2i == 3i as true.
+                result = result and op_dict[operator](value1, value2)
             if i == 0:
                 query += subqueries[i].strip()
             query += ' ' + operator + ' ' + subqueries[i + 1].strip()
