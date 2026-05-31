@@ -24,6 +24,12 @@ __all__ = ['MultiHandler']
 logger = logging.getLogger(__name__)
 
 
+# Longest query worth handling. Real queries are short; a longer one is a paste
+# that only feeds the regex and eval paths adversarial input. Well above any
+# genuine expression, so nothing usable is refused.
+MAX_QUERY_LENGTH = 1000
+
+
 class MultiHandler:
     def __init__(self) -> None:
         self._handlers = [
@@ -45,6 +51,9 @@ class MultiHandler:
     ) -> List[Union[Calculation, QueryResult]]:
         results = []
 
+        if len(query) > MAX_QUERY_LENGTH:
+            return results
+
         if not handlers:
             handlers = self._handlers
 
@@ -53,6 +62,11 @@ class MultiHandler:
                 handler = handler()
             try:
                 result = handler.handle(query)
+                # Build the query results inside the try: to_query_result can
+                # raise (e.g. an oversized number failing to format) and must
+                # not take the whole query down with it.
+                if result and not return_raw:
+                    result = [r.to_query_result() for r in result]
             except Exception as e:  # pragma: no cover
                 hdlr_name = handler.__class__.__name__
                 msg = 'Exception in handler: {}: {}'  # pragma: no cover
@@ -62,8 +76,6 @@ class MultiHandler:
 
             if not result:
                 continue
-            if not return_raw:
-                result = map(lambda r: r.to_query_result(), result)
             results.extend(result)
 
         return sorted(results, key=lambda result: result.order)

@@ -64,9 +64,14 @@ digits_base10_re = re.compile(r'^\s*([0-9]+)\s*$')
 def get_simple_eval() -> Union['SimpleEval', StupidEval]:
     simple_eval = SimpleEval()
     if not isinstance(simple_eval, StupidEval):
+        # Base-n queries use and/or/xor, so re-enable the bitwise operators
+        # that simpleeval leaves out by default.
         simple_eval.operators[ast.BitOr] = operator.or_
         simple_eval.operators[ast.BitAnd] = operator.and_
         simple_eval.operators[ast.BitXor] = operator.xor
+        # Only integers and operators are valid here; drop attribute access so
+        # no object internals or string and bytes methods are reachable.
+        simple_eval.nodes.pop(ast.Attribute, None)
     return simple_eval
 
 

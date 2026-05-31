@@ -15,14 +15,6 @@ UNIT_SPLIT_RE = re.compile(r'([A-Za-z_]+)')
 UNIT_CURRENCY_RE = re.compile(r'currency_([A-Za-z]{3,})')
 UNIT_ALIASES_RE = re.compile(r'^[a-zA-Z_]+$')
 
-CURRENCY_QUERY_REGEX = re.compile(
-    r'^\s*(\d+\.?\d*)?\s*(.*)\s+(?:to|in)\s+(.*)$', flags=re.IGNORECASE
-)
-CURRENCY_QUERY_DEFAULT_REGEX = re.compile(
-    r'^\s*(\d+\.?\d*)?\s*(.*?)(?:\s+(?:to|in)?\s*$|\s*$)', flags=re.IGNORECASE
-)
-EMPTY_AMOUNT = re.compile(r'^\s*$')
-
 CALCULATOR_REGEX_REJECT = re.compile(
     r'.*(%|\/\/|==|[^a-z]is[^a-z]).*', flags=re.IGNORECASE
 )
@@ -43,8 +35,12 @@ PERCENTAGES_REGEX_MATCH_INVERSE = re.compile(
 )
 PERCENTAGES_REGEX_CALC_MATCH = re.compile(r'^[^%]+[\+\-][^%]+%$')
 
+# Splits a time query into "<expr> <keyword> <location>" on in/at/until. Single
+# \s, not \s+, on each side: a surrounding run of spaces lets the engine
+# backtrack quadratically on a long whitespace paste, and the segments are
+# stripped afterwards so one space matches identically.
 TIME_QUERY_REGEX_SPLIT = re.compile(
-    r'(?:^|\s+)(in?|at?|(?:un)?till?)(?:\s+|$)', flags=re.IGNORECASE
+    r'(?:^|\s)(in?|at?|(?:un)?till?)(?:\s|$)', flags=re.IGNORECASE
 )
 TIME_SUBQUERY_REGEX = re.compile(
     r'.*[^\W_0-9].*', flags=re.IGNORECASE | re.UNICODE

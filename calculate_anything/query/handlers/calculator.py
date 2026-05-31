@@ -1,5 +1,6 @@
 from typing import List, Tuple, Union
 import re
+import ast
 import math
 import cmath
 import operator as op
@@ -12,11 +13,16 @@ try:
         NameNotDefined,
         FeatureNotAvailable,
         FunctionNotDefined,
+        InvalidExpression,
+        NumberTooHigh,
     )
 except ImportError:  # pragma: no cover
     SimpleEval = StupidEval
     NameNotDefined = TypeError
     FeatureNotAvailable = TypeError
+    FunctionNotDefined = TypeError
+    InvalidExpression = TypeError
+    NumberTooHigh = TypeError
 from calculate_anything.query.handlers.base import QueryHandler
 from calculate_anything import logging
 from calculate_anything.calculation.base import CalculationError
@@ -43,10 +49,43 @@ __all__ = ['CalculatorQueryHandler']
 logger = logging.getLogger(__name__)
 
 
+# simpleeval's own ceiling (4e6) still lets a**b churn for seconds on a large
+# exponent. Cap the exponent, not the base, so everyday powers like 300000**2
+# still work while 9**4000000 is rejected before it is computed. Anything past
+# float range is dropped at format time anyway, so nothing displayable is lost.
+_MAX_EXPONENT = 100000
+
+
+def _safe_power(base, exponent):
+    if abs(exponent) > _MAX_EXPONENT:
+        raise NumberTooHigh('Exponent too large to evaluate')
+    return base**exponent
+
+
+def _is_displayable(value: Union[int, float, complex, bool]) -> bool:
+    # A result is rendered with '{:g}', which converts to float first, so a
+    # value past float range (2**1024 and up) raises OverflowError mid-render.
+    # Reject those here so the query yields no result instead of throwing.
+    try:
+        if isinstance(value, complex):
+            parts = (value.real, value.imag)
+        else:
+            parts = (value,)
+        return all(math.isfinite(float(part)) for part in parts)
+    except (OverflowError, ValueError):
+        return False
+
+
 def get_simple_eval(functions) -> Union['SimpleEval', StupidEval]:
     simple_eval = SimpleEval()
     if not isinstance(simple_eval, StupidEval):
         simple_eval.functions = functions
+        # Numbers, operators and the bound function names are the only valid
+        # tokens. Attribute access would expose string and bytes methods, such
+        # as 'a'.center(10**8) as an allocation bomb, so drop it from the
+        # grammar entirely.
+        simple_eval.nodes.pop(ast.Attribute, None)
+        simple_eval.operators[ast.Pow] = _safe_power
     return simple_eval
 
 
@@ -131,9 +170,9 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
                     "m{}s".format(i): self.mem_load(i, op.sub),
                     "m{}m".format(i): self.mem_load(i, op.mul),
                     "m{}d".format(i): self.mem_load(i, op.truediv),
-                    "m{}e".format(i): self.mem_load(i, op.pow),
+                    "m{}e".format(i): self.mem_load(i, _safe_power),
                     "m{}r".format(i): self.mem_load(
-                        i, lambda x, y: op.pow(x, 1 / y)
+                        i, lambda x, y: _safe_power(x, 1 / y)
                     ),
                 }
             )
@@ -360,12 +399,15 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
             return [item]
         except (SyntaxError, TypeError):
             return None
-        except (NameNotDefined, FeatureNotAvailable, FunctionNotDefined) as e:
-            logger.debug(
-                'Got simpleval Exception: when calculating {!r}: {}'.format(
-                    query, e
-                )
-            )
+        except (
+            NameNotDefined,
+            FeatureNotAvailable,
+            FunctionNotDefined,
+            InvalidExpression,
+        ) as e:
+            # InvalidExpression also covers NumberTooHigh (e.g. 9**9**9), a
+            # benign rejection rather than an error worth a stack trace.
+            logger.debug('Rejected expression {!r}: {}'.format(query, e))
             return None
         except Exception as e:  # pragma: no cover
             logger.exception(
@@ -378,6 +420,9 @@ class CalculatorQueryHandler(QueryHandler, metaclass=Singleton):
         if not any(map(is_types(int, float, complex), results)):
             # (result must be one of int float complex, just in case)
             return None  # pragma: no cover
+
+        if not all(map(_is_displayable, results)):
+            return None
 
         if len(results) != 1:
             result = CalculatorQueryHandler._calculate_boolean_result(

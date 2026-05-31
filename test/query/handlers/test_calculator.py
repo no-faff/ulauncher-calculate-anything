@@ -261,7 +261,49 @@ test_spec_calculator = [
         'query': '= print(12)',
         'results': [],
     },
+    {
+        # A power past float range used to crash to_query_result with an
+        # OverflowError; it is now dropped as not displayable.
+        'query': '= 2 ^ 1024',
+        'results': [],
+    },
+    {
+        # An oversized exponent is rejected before it is computed, so it does
+        # not churn for seconds.
+        'query': '= 9 ^ 4000000',
+        'results': [],
+    },
+    {
+        # simpleeval blocks the classic 9**9**9 power bomb.
+        'query': '= 9 ^ 9 ^ 9',
+        'results': [],
+    },
+    {
+        # Attribute access is disabled, so string and bytes methods cannot be
+        # reached as allocation or escape vectors.
+        'query': "= 'a'.center(5000000)",
+        'results': [],
+    },
+    {
+        # Object internals are unreachable via attribute access.
+        'query': '= (1).__class__',
+        'results': [],
+    },
 ]
+
+
+def test_calculator_handles_oversized_without_raising():
+    # Regression: these went through MultiHandler (which builds the query
+    # results) and used to raise out of handle(), not just return nothing.
+    for query in ['= 2 ^ 1024', '= 9 ^ 4000000', "= 'a'.center(5000000)"]:
+        assert MultiHandler().handle(query) == []
+
+
+def test_multihandler_rejects_overlong_query():
+    # A pasted multi-KB string must be refused before it reaches the regex and
+    # eval paths, so it cannot be used to drive a ReDoS or allocation.
+    overlong = '= ' + '1+' * 5000 + '1'
+    assert MultiHandler().handle(overlong) == []
 
 
 @pytest.mark.parametrize('test_spec', test_spec_calculator)
