@@ -611,6 +611,25 @@ def test_until(test_spec):
         query_test_helper(MultiHandler, test_spec, raw=False, only_qr=True)
 
 
+def test_adjacent_day_label_crosses_week_boundary():
+    # From a Monday, "- 1 day" lands in the previous ISO week, which used to be
+    # labelled "last week"; an adjacent day must read as yesterday/tomorrow.
+    monday = datetime(2021, 7, 5, 14, 0, 0)
+    with set_time_reference(monday):
+        descriptions = [
+            r.to_query_result().description
+            for r in TimeQueryHandler().handle('time - 1 day')
+        ]
+        assert tr_time('yesterday') in descriptions
+        assert tr_time('last-week').capitalize() not in descriptions
+
+        descriptions = [
+            r.to_query_result().description
+            for r in TimeQueryHandler().handle('time + 1 day')
+        ]
+        assert tr_time('tomorrow') in descriptions
+
+
 test_spec_parsedatetime_missing = [
     {
         # Normal test with time calculation and target city

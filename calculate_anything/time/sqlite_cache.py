@@ -153,19 +153,20 @@ class TimezoneSqliteCache:
                 GROUP BY id
             ) country ON country.id = city.country_id
             LEFT JOIN (
-                SELECT * FROM cities ct
+                SELECT ct.id city_id
+                FROM cities ct
                 INNER JOIN cities_states cs ON cs.city_id = ct.id
                 INNER JOIN states s ON s.id = cs.state_id
                 WHERE {}
-                GROUP BY ct.id, s.id
-            ) state ON state.id = city.state_id
+                GROUP BY ct.id
+            ) state ON state.city_id = city.id
             LEFT JOIN (
                 SELECT ct.id city_id
                 FROM cities ct
                 INNER JOIN timezones t ON t.id = ct.timezone_id
                 WHERE {}
             ) tz ON tz.city_id = city.id
-            WHERE country.id IS NOT NULL OR state.id IS NOT NULL OR
+            WHERE country.id IS NOT NULL OR state.city_id IS NOT NULL OR
                 tz.city_id IS NOT NULL
             ORDER BY (city.name_alias = ?) DESC, city.population DESC
             '''  # nosec

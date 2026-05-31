@@ -78,6 +78,11 @@ class SqliteLoader(Loader):
                 cached_statements=500,
             )
             db.cursor().execute('PRAGMA foreign_keys = ON;').close()
+            # connect() is lazy, so a corrupt or non-sqlite file is only
+            # rejected when its header is first read. Force that now, while we
+            # can still fall back to the default database, rather than crashing
+            # on the user's first time query.
+            db.cursor().execute('SELECT 1 FROM sqlite_master').close()
             self._status |= Loader.Status.SUCCESS
             msg = 'Loaded timezone database: {}'
             msg = msg.format(self.sqlite_filepath)
@@ -86,6 +91,7 @@ class SqliteLoader(Loader):
             msg = 'Could not read database file: {}'
             msg = msg.format(e)
             logger.exception(msg)
+            self.db = None
             self._mode |= Loader.Mode.REMOVE
 
     @Loader.Decorators.without_status(Loader.Status.FAIL)

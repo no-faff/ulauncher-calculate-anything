@@ -38,9 +38,17 @@ class TimeCalculation(Calculation):
         now = self.reference_date
         now_week = now.isocalendar()[1]
         date_week = self.value.isocalendar()[1]
+        day_diff = (self.value.date() - now.date()).days
 
         if now == self.value:
             description = translator('now').capitalize()
+        # An adjacent day is always yesterday or tomorrow, even when it falls in
+        # another ISO week, month or year; the week branch below would otherwise
+        # label a Monday's "- 1 day" as last week.
+        elif day_diff == 1:
+            description = translator('tomorrow')
+        elif day_diff == -1:
+            description = translator('yesterday')
         elif now.year < self.value.year:
             diff = self.value.year - now.year
             description = 'years-from-now' if diff > 1 else 'next-year'

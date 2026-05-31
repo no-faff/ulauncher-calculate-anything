@@ -87,6 +87,20 @@ test_spec = [
         ],
     },
     {'input': (('Pragu', 'Czechia'), {'exact': True}), 'expected': []},
+    {
+        # State-code disambiguation. The sqlite state join was broken, so this
+        # returned nothing instead of the Athens in Alabama.
+        'input': (('Athens', 'AL'), {}),
+        'expected': [
+            {
+                'name': 'Athens',
+                'cc': 'US',
+                'country': 'United States',
+                'timezone': 'America/Chicago',
+                'state': 'AL',
+            },
+        ],
+    },
 ]
 
 
@@ -103,3 +117,17 @@ def test(test_spec):
     assert cities == expected
 
     cache.close_db()
+
+
+def test_sqlite_loader_rejects_corrupt_file(tmp_path):
+    # connect() is lazy, so a corrupt file used to load "successfully" and crash
+    # on the first query. The loader must reject it up front so the caller can
+    # fall back to the default database.
+    from calculate_anything.utils.loaders import SqliteLoader
+
+    corrupt = tmp_path / 'corrupt.sqlite3'
+    corrupt.write_text('this is not a database')
+
+    loader = SqliteLoader(str(corrupt))
+    assert loader.load() is False
+    assert loader.db is None
