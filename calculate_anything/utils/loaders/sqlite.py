@@ -92,27 +92,23 @@ class SqliteLoader(Loader):
     @Loader.Decorators.without_mode(Loader.Mode.NO_REMOVE)
     @Loader.Decorators.with_mode(Loader.Mode.REMOVE)
     def _remove(self) -> None:
+        # A stale database (older than the sql) is rebuilt atomically in
+        # _create and swapped into place only once it is complete, so the
+        # existing file is kept as a fallback instead of being deleted up
+        # front. Only a path that is unexpectedly a directory is cleared here.
         if os.path.isdir(self.sqlite_filepath):
             self._status |= Loader.Status.FILE_IS_DIR
             try:
                 shutil.rmtree(self.sqlite_filepath)
+                self._sqlite_file_exists = False
             except Exception as e:  # pragma: no cover
                 self._mode |= Loader.Mode.MEMORY
                 msg = 'Could not remove directory database {}: {}'
                 msg = msg.format(self.sqlite_filepath, e)
                 logger.exception(msg)
                 return
-        else:
-            try:
-                os.remove(self.sqlite_filepath)
-            except Exception as e:  # pragma: no cover
-                self._mode |= Loader.Mode.MEMORY
-                msg = 'Could not remove file database {}: {}'
-                msg = msg.format(self.sqlite_filepath, e)
-                logger.exception(msg)
-                return
 
-        logger.info('Found new timezones, cleared database')
+        logger.info('Found new timezones, rebuilding database')
         self._mode |= Loader.Mode.CREATE
 
     @Loader.Decorators.with_data
@@ -138,25 +134,87 @@ class SqliteLoader(Loader):
     @Loader.Decorators.with_mode(Loader.Mode.CREATE)
     @Loader.Decorators.without_status(Loader.Status.FAIL)
     def _create(self) -> None:
+        # Build into a temporary file and swap it into place only once it is
+        # complete, so an interrupted or failed rebuild never leaves a missing
+        # or half-written database. On failure any existing database is kept.
+        build_path = self.sqlite_filepath + '.building'
+        try:
+            if os.path.exists(build_path):
+                os.remove(build_path)
+            self.db = sqlite3.connect(
+                build_path,
+                check_same_thread=False,
+                cached_statements=500,
+            )
+        # Can't test this without huge hacks
+        # In case we can't write the file use memory
+        except Exception as e:  # pragma: no cover
+            msg = 'Could not create database {}: {}'
+            msg = msg.format(build_path, e)
+            logger.exception(msg)
+            self._mode |= Loader.Mode.MEMORY
+            return
+
+        self._execute_script()
+
+        if self._status & Loader.Status.SUCCESS:
+            try:
+                self.db.close()
+                os.replace(build_path, self.sqlite_filepath)
+                self.db = sqlite3.connect(
+                    self.sqlite_filepath,
+                    check_same_thread=False,
+                    cached_statements=500,
+                )
+                self.db.cursor().execute('PRAGMA foreign_keys = ON;').close()
+                msg = 'Built timezone database: {}'
+                logger.info(msg.format(self.sqlite_filepath))
+            # Can't test this without huge hacks
+            except Exception as e:  # pragma: no cover
+                msg = 'Could not finalise database {}: {}'
+                msg = msg.format(self.sqlite_filepath, e)
+                logger.exception(msg)
+                self._discard(build_path)
+                self._open_existing()
+        else:
+            # Build failed: drop the temp file and keep serving the previous
+            # database if there is a usable one.
+            self._discard(build_path)
+            self._open_existing()
+
+    def _discard(self, build_path: str) -> None:
+        try:
+            if self.db is not None:
+                self.db.close()
+        except Exception:  # pragma: no cover
+            pass
+        self.db = None
+        try:
+            if os.path.exists(build_path):
+                os.remove(build_path)
+        except Exception:  # pragma: no cover
+            pass
+
+    def _open_existing(self) -> None:
+        # On a failed rebuild, keep serving the previous database rather than
+        # dropping to the slower, less complete json fallback.
+        if not self._sqlite_file_exists or os.path.isdir(self.sqlite_filepath):
+            return
         try:
             self.db = sqlite3.connect(
                 self.sqlite_filepath,
                 check_same_thread=False,
                 cached_statements=500,
             )
-            msg = 'Did not find sqlite db {}, created from scratch'
-            msg = msg.format(self.sqlite_filepath)
-            logger.info(msg)
+            self.db.cursor().execute('PRAGMA foreign_keys = ON;').close()
+            self._status &= ~Loader.Status.FAIL
+            self._status &= ~Loader.Status.INVALID_DATA
+            self._status |= Loader.Status.SUCCESS
+            msg = 'Rebuild failed, kept the existing timezone database: {}'
+            logger.warning(msg.format(self.sqlite_filepath))
         # Can't test this without huge hacks
-        # In case we can't remove the file/directory
-        # Use memory
-        except Exception as e:  # pragma: no cover
-            msg = 'Could not create database {}: {}'  # pragma: no cover
-            msg = msg.format(self.sqlite_filepath, e)
-            logger.exception(msg)
-            self._mode |= Loader.Mode.MEMORY
-            return
-        self._execute_script()
+        except Exception:  # pragma: no cover
+            self.db = None
 
     @Loader.Decorators.with_data
     @Loader.Decorators.without_status(Loader.Status.FAIL)

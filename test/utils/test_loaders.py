@@ -1,4 +1,7 @@
+import os
+import time
 import json
+import sqlite3
 import pytest
 from calculate_anything.utils.loaders import (
     SqliteLoader,
@@ -523,6 +526,70 @@ class MockLoader(Loader):
     @property
     def data(self) -> None:
         return None
+
+
+def _make_sqlite(path, names):
+    db = sqlite3.connect(path)
+    db.execute('CREATE TABLE city (name TEXT)')
+    db.executemany(
+        'INSERT INTO city (name) VALUES (?)', [(n,) for n in names]
+    )
+    db.commit()
+    db.close()
+
+
+def test_sqlite_failed_rebuild_keeps_existing():
+    # A newer but broken sql must not destroy a working database: the rebuild
+    # is discarded and the existing database keeps being served.
+    sqlite_fpath = temp_filepath('tzkeep.sqlite3')
+    sql_fpath = temp_filepath('tzkeep.sql')
+    try:
+        _make_sqlite(sqlite_fpath, ['London', 'Tokyo'])
+        time.sleep(0.02)  # ensure the sql is newer, triggering a rebuild
+        with open(sql_fpath, 'w', encoding='utf-8') as f:
+            f.write('INSERT INTO WHAT THE FUCK?')
+
+        loader = SqliteLoader(sqlite_fpath, sql_fpath)
+        loaded = loader.load()
+
+        assert loaded is True
+        assert loader.status & SqliteLoader.Status.SUCCESS
+        names = [r[0] for r in loader.db.execute('SELECT name FROM city')]
+        assert names == ['London', 'Tokyo']
+        assert not os.path.exists(sqlite_fpath + '.building')
+        loader.close()
+    finally:
+        osremove(sqlite_fpath)
+        osremove(sql_fpath)
+        osremove(sqlite_fpath + '.building')
+
+
+def test_sqlite_successful_rebuild_swaps_in_new_data():
+    # A newer valid sql rebuilds and atomically replaces the old database.
+    sqlite_fpath = temp_filepath('tzswap.sqlite3')
+    sql_fpath = temp_filepath('tzswap.sql')
+    try:
+        _make_sqlite(sqlite_fpath, ['OldCity'])
+        time.sleep(0.02)
+        with open(sql_fpath, 'w', encoding='utf-8') as f:
+            f.write(
+                "CREATE TABLE city (name TEXT);\n"
+                "INSERT INTO city (name) VALUES ('NewCity');"
+            )
+
+        loader = SqliteLoader(sqlite_fpath, sql_fpath)
+        loaded = loader.load()
+
+        assert loaded is True
+        assert loader.status & SqliteLoader.Status.SUCCESS
+        names = [r[0] for r in loader.db.execute('SELECT name FROM city')]
+        assert names == ['NewCity']
+        assert not os.path.exists(sqlite_fpath + '.building')
+        loader.close()
+    finally:
+        osremove(sqlite_fpath)
+        osremove(sql_fpath)
+        osremove(sqlite_fpath + '.building')
 
 
 def test_coverage():
