@@ -288,6 +288,10 @@ class UnitsPreferences(_Preferences):
     def conversion_mode(self) -> UnitsService.ConversionMode:
         return UnitsService().conversion_mode
 
+    @property
+    def unit_system(self) -> str:
+        return UnitsService().unit_system
+
     def set_conversion_mode(
         self, mode: Union[str, UnitsService.ConversionMode]
     ) -> None:
@@ -319,9 +323,27 @@ class UnitsPreferences(_Preferences):
         )
         super()._to_commit('units_conversion_mode', mode)
 
+    def set_unit_system(self, unit_system: str) -> None:
+        '''The unit system to set, deciding what bare unit names like 'pint'
+        and 'gallon' mean. Not applied immediately, only after 'commit()'.
+
+        Args:
+            unit_system (str): 'us' (default) or 'imperial'.
+        '''
+        unit_system = get_or_default(
+            str(unit_system).lower(), str, 'us', ['us', 'imperial']
+        )
+        super()._to_commit('units_unit_system', unit_system)
+
     def _commit_one(self, key: str, value: Any) -> None:
         if key == 'units_conversion_mode':
             UnitsService().set_conversion_mode(value)
+        elif key == 'units_unit_system':
+            UnitsService().set_unit_system(value)
+            # On a live change (first start is handled by _pre_commit) the
+            # registry must be rebuilt so bare names pick up the new system.
+            if self._commits > 0:
+                UnitsService().start(force=True)
 
     def _pre_commit(self) -> None:
         if self._commits == 0:

@@ -67,13 +67,73 @@ _PREFS_FILE = (
 )
 
 
+# Snapshot of the preference values last applied to the services, used to
+# apply saved changes on the next query without needing a restart.
+_applied_preferences = {}
+
+
+def _apply_preference(preferences, extension, key, new_value, old_value):
+    """Apply a single changed preference to its service."""
+    if key == 'cache':
+        preferences.currency.set_cache_update_frequency(new_value)
+    elif key == 'default_currencies':
+        preferences.currency.set_default_currencies(new_value)
+    elif key == 'api_key':
+        currency_provider = extension.preferences['currency_provider']
+        preferences.currency.add_provider(currency_provider, new_value)
+    elif key == 'currency_provider':
+        if old_value:
+            preferences.currency.remove_provider(old_value)
+        api_key = extension.preferences['api_key']
+        preferences.currency.add_provider(new_value, api_key)
+    elif key == 'currency_provider_protocol':
+        preferences.currency.set_currency_provider_protocol(new_value)
+    elif key == 'default_cities':
+        preferences.time.set_default_cities(new_value)
+    elif key == 'units_conversion_mode':
+        preferences.units.set_conversion_mode(new_value)
+    elif key == 'unit_system':
+        preferences.units.set_unit_system(new_value)
+    elif key == 'trig_mode':
+        preferences.calculator.set_trig_mode(new_value)
+
+
 def _refresh_preferences(extension):
-    """Update extension.preferences from disk."""
+    """Read saved preferences from disk and apply any that changed.
+
+    Ulauncher 6 in API v2 compat mode does not reliably fire
+    PreferencesUpdateEvent, so a Save would otherwise need a restart to take
+    effect. Reading on each query and applying the diff keeps the running
+    services in sync with what the user saved.
+    """
+    global _applied_preferences
     try:
         data = json.loads(_PREFS_FILE.read_text())
-        extension.preferences.update(data.get("preferences", {}))
     except (OSError, json.JSONDecodeError):
-        pass
+        return
+    prefs = data.get("preferences", {})
+    extension.preferences.update(prefs)
+
+    if not _applied_preferences:
+        # First read after startup: PreferencesEvent already applied these,
+        # so just record the baseline.
+        _applied_preferences = dict(prefs)
+        return
+
+    changed = [
+        (key, value, _applied_preferences.get(key))
+        for key, value in prefs.items()
+        if _applied_preferences.get(key) != value
+    ]
+    if not changed:
+        return
+
+    preferences = Preferences()
+    for key, new_value, old_value in changed:
+        with safe_operation('Apply preference {}'.format(key)):
+            _apply_preference(preferences, extension, key, new_value, old_value)
+    preferences.commit()
+    _applied_preferences = dict(prefs)
 
 
 class KeywordQueryEventListener(EventListener):
@@ -168,6 +228,10 @@ class PreferencesEventListener(EventListener):
             mode = event.preferences['units_conversion_mode']
             preferences.units.set_conversion_mode(mode)
 
+        with safe_operation('Set unit system'):
+            unit_system = event.preferences.get('unit_system', 'us')
+            preferences.units.set_unit_system(unit_system)
+
         with safe_operation('Set currency provider protocol'):
             protocol = event.preferences['currency_provider_protocol']
             preferences.currency.set_currency_provider_protocol(protocol)
@@ -198,30 +262,9 @@ class PreferencesUpdateEventListener(EventListener):
         super().on_event(event, extension)
 
         preferences = Preferences()
-
-        if event.id == 'cache':
-            preferences.currency.set_cache_update_frequency(event.new_value)
-        elif event.id == 'default_currencies':
-            preferences.currency.set_default_currencies(event.new_value)
-        elif event.id == 'api_key':
-            currency_provider = extension.preferences['currency_provider']
-            preferences.currency.add_provider(
-                currency_provider, event.new_value
-            )
-        elif event.id == 'currency_provider':
-            old_provider = event.old_value
-            preferences.currency.remove_provider(old_provider)
-            api_key = extension.preferences['api_key']
-            preferences.currency.add_provider(event.new_value, api_key)
-        elif event.id == 'currency_provider_protocol':
-            preferences.currency.set_currency_provider_protocol(event.new_value)
-        elif event.id == 'default_cities':
-            preferences.time.set_default_cities(event.new_value)
-        elif event.id == 'units_conversion_mode':
-            preferences.units.set_conversion_mode(event.new_value)
-        elif event.id == 'trig_mode':
-            preferences.calculator.set_trig_mode(event.new_value)
-
+        _apply_preference(
+            preferences, extension, event.id, event.new_value, event.old_value
+        )
         preferences.commit()
 
 

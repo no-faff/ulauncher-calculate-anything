@@ -37,6 +37,7 @@ class UnitsService(metaclass=Singleton):
         self._running = False
         self._currency_timestamps = {}
         self._conversion_mode = UnitsService.ConversionMode.NORMAL
+        self._unit_system = 'us'
 
     @property
     def lock(self):
@@ -103,6 +104,73 @@ class UnitsService(metaclass=Singleton):
     def conversion_mode(self) -> ConversionMode:
         return self._conversion_mode
 
+    def set_unit_system(self, unit_system: str) -> 'UnitsService':
+        self._unit_system = unit_system
+        return self
+
+    @property
+    def unit_system(self) -> str:
+        return self._unit_system
+
+    # US and imperial share many unit names (pint, gallon, ...) but differ in
+    # size, and pint defaults every shared name to the US value. We expose
+    # explicit us_/uk_/imp_/imperial_ forms for each such unit so a query can
+    # always be unambiguous, and let the 'unit_system' preference decide what
+    # the bare name means. The registry is built with case_sensitive=False, so
+    # these aliases resolve in any case (US_PINT, uk_pint, Imp_Pint).
+    _IMPERIAL_PAIRS = {
+        'pint': 'imperial_pint',
+        'quart': 'imperial_quart',
+        'gallon': 'imperial_gallon',
+        'fluid_ounce': 'imperial_fluid_ounce',
+        'gill': 'imperial_gill',
+        'cup': 'imperial_cup',
+        'bushel': 'imperial_bushel',
+        'peck': 'imperial_peck',
+        'ton': 'long_ton',
+    }
+
+    def _apply_unit_system(self, ureg: 'pint.UnitRegistry') -> None:
+        pairs = UnitsService._IMPERIAL_PAIRS
+
+        # Capture magnitudes before mutating anything, so redefining one bare
+        # unit can never shift another that derives from it.
+        def magnitude(name):
+            q = ureg.Quantity(1, name)
+            ref = 'kilogram' if q.check('[mass]') else 'liter'
+            return q.to(ref).magnitude, ref
+
+        us_mag = {base: magnitude(base) for base in pairs}
+        imp_mag = {base: magnitude(imp) for base, imp in pairs.items()}
+
+        for base, imp in pairs.items():
+            mag, ref = us_mag[base]
+            # Standalone US unit, frozen so the imperial override below can
+            # never change it.
+            ureg.define('us_{} = {} * {}'.format(base, mag, ref))
+            # uk_/imp_ (plus imperial_ when the imperial name differs, e.g.
+            # ton -> long_ton) alias the imperial unit.
+            extra = ['uk_' + base, 'imp_' + base]
+            if imp != 'imperial_' + base:
+                extra.append('imperial_' + base)
+            ureg.define('@alias {} = {}'.format(imp, ' = '.join(extra)))
+
+        # Short symbol for fluid ounce.
+        ureg.define('@alias us_fluid_ounce = us_floz')
+        ureg.define('@alias imperial_fluid_ounce = uk_floz = imp_floz')
+
+        if self._unit_system == 'imperial':
+            for base in pairs:
+                mag, ref = imp_mag[base]
+                ureg.define('{} = {} * {}'.format(base, mag, ref))
+            # pint caches unit parsing during start(), so redefining an
+            # existing unit is otherwise served stale. Rebuild the cache so the
+            # imperial bare names take effect. Guarded as it is a private API.
+            try:
+                ureg._build_cache()
+            except Exception:  # pragma: no cover - future pint compatibility
+                logger.exception('Could not rebuild pint cache for unit system')
+
     @property
     def base_currency(self) -> 'pint.Quantity':
         return self._base_currency
@@ -167,6 +235,7 @@ class UnitsService(metaclass=Singleton):
             mode='units',
             is_currency=False,
         )
+        self._apply_unit_system(self._unit_registry)
         self._base_currency = self._unit_registry.Quantity(1, 'currency_EUR')
         CurrencyService().remove_update_callback(self._update_callback)
         CurrencyService().add_update_callback(self._update_callback)

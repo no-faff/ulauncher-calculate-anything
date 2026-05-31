@@ -131,6 +131,17 @@
       ]
     },
     {
+      "id": "unit_system",
+      "type": "select",
+      "name": "Imperial/US units",
+      "description": "Which system bare units like pint and gallon use. Explicit us_pint, uk_pint and imp_pint always work whichever you pick.",
+      "default_value": "us",
+      "options": [
+        {"value": "us", "text": "US"},
+        {"value": "imperial", "text": "Imperial"}
+      ]
+    },
+    {
       "id": "show_empty_placeholder",
       "type": "select",
       "name": "Empty Placeholder",
