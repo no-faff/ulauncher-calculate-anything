@@ -531,9 +531,7 @@ class MockLoader(Loader):
 def _make_sqlite(path, names):
     db = sqlite3.connect(path)
     db.execute('CREATE TABLE city (name TEXT)')
-    db.executemany(
-        'INSERT INTO city (name) VALUES (?)', [(n,) for n in names]
-    )
+    db.executemany('INSERT INTO city (name) VALUES (?)', [(n,) for n in names])
     db.commit()
     db.close()
 

@@ -50,7 +50,9 @@ def test_imperial_system_changes_bare_units():
         assert _litres('pint') == 0.5683
         assert _litres('gallon') == 4.5461
         ureg = UnitsService().unit_registry
-        assert round(ureg.Quantity(26, 'pint').to('liter').magnitude, 2) == 14.77
+        assert (
+            round(ureg.Quantity(26, 'pint').to('liter').magnitude, 2) == 14.77
+        )
 
         # Explicit forms still pin the system regardless.
         assert _litres('us_pint') == 0.4732
