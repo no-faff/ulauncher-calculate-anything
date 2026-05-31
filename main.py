@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
 from pathlib import Path
 
 from calculate_anything.utils.misc import images_dir
@@ -22,6 +21,7 @@ from ulauncher.api.client.EventListener import EventListener
 from ulauncher.api.client.Extension import Extension
 from calculate_anything.utils import safe_operation
 from calculate_anything.preferences import Preferences
+from calculate_anything.prefs_sync import PreferencesSync
 from calculate_anything.query.handlers import (
     PercentagesQueryHandler,
     UnitsQueryHandler,
@@ -67,73 +67,15 @@ _PREFS_FILE = (
 )
 
 
-# Snapshot of the preference values last applied to the services, used to
-# apply saved changes on the next query without needing a restart.
-_applied_preferences = {}
-
-
-def _apply_preference(preferences, extension, key, new_value, old_value):
-    """Apply a single changed preference to its service."""
-    if key == 'cache':
-        preferences.currency.set_cache_update_frequency(new_value)
-    elif key == 'default_currencies':
-        preferences.currency.set_default_currencies(new_value)
-    elif key == 'api_key':
-        currency_provider = extension.preferences['currency_provider']
-        preferences.currency.add_provider(currency_provider, new_value)
-    elif key == 'currency_provider':
-        if old_value:
-            preferences.currency.remove_provider(old_value)
-        api_key = extension.preferences['api_key']
-        preferences.currency.add_provider(new_value, api_key)
-    elif key == 'currency_provider_protocol':
-        preferences.currency.set_currency_provider_protocol(new_value)
-    elif key == 'default_cities':
-        preferences.time.set_default_cities(new_value)
-    elif key == 'units_conversion_mode':
-        preferences.units.set_conversion_mode(new_value)
-    elif key == 'unit_system':
-        preferences.units.set_unit_system(new_value)
-    elif key == 'trig_mode':
-        preferences.calculator.set_trig_mode(new_value)
+# Keeps the running services in sync with the saved preferences file so a Save
+# takes effect without a restart. The baseline is captured at startup in
+# PreferencesEventListener.
+_sync = PreferencesSync(_PREFS_FILE)
 
 
 def _refresh_preferences(extension):
-    """Read saved preferences from disk and apply any that changed.
-
-    Ulauncher 6 in API v2 compat mode does not reliably fire
-    PreferencesUpdateEvent, so a Save would otherwise need a restart to take
-    effect. Reading on each query and applying the diff keeps the running
-    services in sync with what the user saved.
-    """
-    global _applied_preferences
-    try:
-        data = json.loads(_PREFS_FILE.read_text())
-    except (OSError, json.JSONDecodeError):
-        return
-    prefs = data.get("preferences", {})
+    prefs = _sync.apply_changes(lambda key: extension.preferences.get(key))
     extension.preferences.update(prefs)
-
-    if not _applied_preferences:
-        # First read after startup: PreferencesEvent already applied these,
-        # so just record the baseline.
-        _applied_preferences = dict(prefs)
-        return
-
-    changed = [
-        (key, value, _applied_preferences.get(key))
-        for key, value in prefs.items()
-        if _applied_preferences.get(key) != value
-    ]
-    if not changed:
-        return
-
-    preferences = Preferences()
-    for key, new_value, old_value in changed:
-        with safe_operation('Apply preference {}'.format(key)):
-            _apply_preference(preferences, extension, key, new_value, old_value)
-    preferences.commit()
-    _applied_preferences = dict(prefs)
 
 
 class KeywordQueryEventListener(EventListener):
@@ -254,6 +196,9 @@ class PreferencesEventListener(EventListener):
             preferences.calculator.set_trig_mode(trig_mode)
 
         preferences.commit()
+        # Record what startup applied, so a change saved before the first
+        # query is still detected and applied by _refresh_preferences.
+        _sync.capture_baseline()
 
 
 class PreferencesUpdateEventListener(EventListener):
@@ -262,8 +207,12 @@ class PreferencesUpdateEventListener(EventListener):
         super().on_event(event, extension)
 
         preferences = Preferences()
-        _apply_preference(
-            preferences, extension, event.id, event.new_value, event.old_value
+        PreferencesSync._apply_one(
+            preferences,
+            lambda key: extension.preferences.get(key),
+            event.id,
+            event.new_value,
+            event.old_value,
         )
         preferences.commit()
 
