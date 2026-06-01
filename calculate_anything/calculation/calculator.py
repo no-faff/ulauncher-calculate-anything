@@ -3,7 +3,7 @@ from typing import Union
 from calculate_anything.calculation.base import Calculation
 from calculate_anything.query.result import QueryResult
 from calculate_anything.lang import LanguageService
-from calculate_anything.utils import multi_re, images_dir
+from calculate_anything.utils import multi_re, images_dir, capitalize_first
 
 
 __all__ = ['CalculatorCalculation', 'BooleanCalculation']
@@ -23,9 +23,9 @@ class CalculatorCalculation(Calculation):
 
         value_type = self.value_type
         if value_type == Calculation.ValueType.IMAGINARY:
-            return translator('result-imaginary').capitalize()
+            return capitalize_first(translator('result-imaginary'))
         if value_type == Calculation.ValueType.COMPLEX:
-            return translator('result-complex').capitalize()
+            return capitalize_first(translator('result-complex'))
         return ''
 
     def format_query(self) -> str:
@@ -105,7 +105,7 @@ class BooleanCalculation(CalculatorCalculation):
         result = str(self.value).lower()
 
         description = self.format_query()
-        result_is_bool_str = translator('result-boolean').capitalize()
+        result_is_bool_str = capitalize_first(translator('result-boolean'))
         description = '{} ({})'.format(description, result_is_bool_str)
 
         return QueryResult(

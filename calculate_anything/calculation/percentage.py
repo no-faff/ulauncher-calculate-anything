@@ -4,7 +4,7 @@ from calculate_anything.calculation.base import CalculationError
 from calculate_anything.calculation import CalculatorCalculation
 from calculate_anything.query.result import QueryResult
 from calculate_anything.lang import LanguageService
-from calculate_anything.utils import images_dir
+from calculate_anything.utils import images_dir, capitalize_first
 
 
 __all__ = [
@@ -41,10 +41,12 @@ class PercentageCalculation(CalculatorCalculation):
         value_type = self.value_type
         extra_descriptions = []
         if value_type == CalculatorCalculation.ValueType.COMPLEX:
-            extra_descriptions.append(translator('result-complex').capitalize())
+            extra_descriptions.append(
+                capitalize_first(translator('result-complex'))
+            )
         elif value_type == CalculatorCalculation.ValueType.IMAGINARY:
             extra_descriptions.append(
-                translator('result-imaginary').capitalize()
+                capitalize_first(translator('result-imaginary'))
             )
 
         return extra_descriptions

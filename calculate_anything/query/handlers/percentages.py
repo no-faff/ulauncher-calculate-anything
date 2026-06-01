@@ -102,7 +102,7 @@ class PercentagesQueryHandler(QueryHandler, metaclass=Singleton):
             )
         except Exception as e:  # pragma: no cover
             logger.exception(
-                'Got exception when calculating inverse percentage '
+                'Got exception when calculating normal percentage '
                 'with values {}, {}: {}'.format(
                     percentage_from.value, percentage_to.value, e
                 )
@@ -201,7 +201,7 @@ class PercentagesQueryHandler(QueryHandler, metaclass=Singleton):
             )
         except Exception as e:  # pragma: no cover
             logger.exception(
-                'Got exception when calculating inverse percentage '
+                'Got exception when calculating calc percentage '
                 'with values {}, {}: {}'.format(
                     amount.value, percentage.value, e
                 )

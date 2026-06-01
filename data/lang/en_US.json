@@ -40,6 +40,8 @@
     "days-ago": "days ago"
   },
   "calculator": {
+    "of": "of",
+    "is": "is",
     "query-boolean": "Query has boolean representation (1 = True, 0 = False)",
 
     "result-complex": "result is a complex number",

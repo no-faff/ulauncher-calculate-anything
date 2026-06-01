@@ -12,7 +12,9 @@ __all__ = ['CurrencyRate', 'CurrencyData']
 
 class CurrencyRate(TypedDict):
     rate: float
-    last_update_timestamp: float
+    # The per-rate field is timestamp_refresh; last_update_timestamp is the
+    # separate top-level cache key, not part of an individual rate.
+    timestamp_refresh: float
 
 
 CurrencyData = Dict[str, CurrencyRate]

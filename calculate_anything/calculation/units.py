@@ -19,7 +19,7 @@ from calculate_anything import logging
 from calculate_anything.calculation.base import Calculation
 from calculate_anything.query.result import QueryResult
 from calculate_anything.lang import LanguageService
-from calculate_anything.utils import multi_re, images_dir
+from calculate_anything.utils import multi_re, images_dir, capitalize_first
 from calculate_anything.constants import FLAGS, TIME_DATETIME_FORMAT_NUMBERS
 from calculate_anything.regex import UNIT_CURRENCY_RE
 
@@ -160,10 +160,10 @@ class UnitsCalculation(Calculation):
 
         descriptions = [description]
         if UnitsCalculation.is_strictly_dimensionless(self.value):
-            desc_part = (
-                LanguageService()
-                .translate('result-dimensionless', 'calculator')
-                .capitalize()
+            desc_part = capitalize_first(
+                LanguageService().translate(
+                    'result-dimensionless', 'calculator'
+                )
             )
             descriptions.append(desc_part)
 
@@ -185,7 +185,10 @@ class TemperatureUnitsCalculation(UnitsCalculation):
         parse_default = True
         if babel_units:
             try:
-                _locale = locale.getlocale()[0]
+                # Use the full locale string (LC_CTYPE) like _format_babel; the
+                # codeset-less getlocale()[0] form is invalid on minimal systems
+                # and would silently drop temperatures to non-localised output.
+                _locale = locale.setlocale(locale.LC_CTYPE)
                 unit_name = (
                     str(self.value.units)
                     .replace('degree_', 'temperature-', 1)

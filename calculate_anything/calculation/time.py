@@ -2,7 +2,7 @@ from typing import Tuple, Union
 from calculate_anything.lang import LanguageService
 from calculate_anything.calculation.base import Calculation
 from calculate_anything.utils.datetime import is_leap_year
-from calculate_anything.utils import images_dir
+from calculate_anything.utils import images_dir, capitalize_first
 from calculate_anything.constants import (
     FLAGS,
     TIME_DATETIME_FORMAT,
@@ -41,7 +41,7 @@ class TimeCalculation(Calculation):
         day_diff = (self.value.date() - now.date()).days
 
         if now == self.value:
-            description = translator('now').capitalize()
+            description = capitalize_first(translator('now'))
         # An adjacent day is always yesterday or tomorrow, even when it falls in
         # another ISO week, month or year; the week branch below would otherwise
         # label a Monday's "- 1 day" as last week.
@@ -98,7 +98,7 @@ class TimeCalculation(Calculation):
             description = translator(description)
             description = '{}{}'.format(diff, description)
         else:
-            description = translator('today').capitalize()
+            description = capitalize_first(translator('today'))
 
         value = self.value.strftime(TIME_DATETIME_FORMAT)
 
@@ -242,7 +242,7 @@ class TimedeltaCalculation(TimeCalculation):
             is_on = '{} {}'.format(translator('was'), translator('on'))
 
         description = '"{}" {} {}'.format(
-            self.query.capitalize(), is_on, description_date
+            capitalize_first(self.query), is_on, description_date
         )
 
         return QueryResult(

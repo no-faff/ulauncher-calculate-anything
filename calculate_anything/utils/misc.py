@@ -5,7 +5,6 @@ from typing import (
     Callable,
     Container,
     Iterator,
-    List,
     Optional,
     Type,
     TypeVar,
@@ -70,7 +69,7 @@ def is_types(*types: Type[Any]) -> Callable[[Any], bool]:
     return lambda value: isinstance(value, types)
 
 
-def is_not_types(*types: List[Type[Any]]) -> bool:
+def is_not_types(*types: Type[Any]) -> Callable[[Any], bool]:
     '''Check if a value is not of type. Useful for maps and filters.
 
     Args:
@@ -81,6 +80,15 @@ def is_not_types(*types: List[Type[Any]]) -> bool:
             and checks if the value is not of any of the provided types.
     '''
     return lambda value: not is_types(*types)(value)
+
+
+def capitalize_first(text: str) -> str:
+    '''Upper-case only the first character, leaving the rest untouched.
+
+    str.capitalize lower-cases the remainder, which corrupts mid-string
+    capitals: a user's "March", an acronym, or a German noun.
+    '''
+    return text[:1].upper() + text[1:]
 
 
 def get_or_default(

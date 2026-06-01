@@ -3,12 +3,30 @@ from calculate_anything.utils import (
     get_module,
     is_types,
     is_not_types,
+    capitalize_first,
     StupidEval,
     get_or_default,
     safe_operation,
     is_integer,
 )
 from calculate_anything.exceptions import MissingSimpleevalException
+
+
+@pytest.mark.parametrize(
+    'text,expected',
+    [
+        ('march 2027', 'March 2027'),
+        ('now', 'Now'),
+        ('Result is a boolean', 'Result is a boolean'),
+        ('résultat', 'Résultat'),
+        ('', ''),
+        ('a', 'A'),
+    ],
+)
+def test_capitalize_first(text, expected):
+    # Only the first character changes; str.capitalize would lower-case the
+    # rest and mangle mid-string capitals.
+    assert capitalize_first(text) == expected
 
 
 def test_get_module():
