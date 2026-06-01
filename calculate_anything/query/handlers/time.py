@@ -1,8 +1,12 @@
 from typing import List, Optional, Tuple, Union
 from calculate_anything.calculation.base import CalculationError
 import re
-import pytz
 from datetime import datetime, timedelta
+
+try:
+    import pytz
+except ImportError:  # pragma: no cover (tested artificially)
+    pytz = None  # pragma: no cover
 
 try:
     import parsedatetime
@@ -18,6 +22,7 @@ from calculate_anything.time.service import TimezoneService
 from calculate_anything.time.data import CityData
 from calculate_anything.exceptions import (
     MissingParsedatetimeException,
+    MissingPytzException,
     DateOverflowException,
     MisparsedDateTimeException,
 )
@@ -378,6 +383,8 @@ class TimeQueryHandler(QueryHandler, metaclass=Singleton):
     ) -> Optional[
         List[Union[TimeCalculation, TimedeltaCalculation, CalculationError]]
     ]:
+        if pytz is None:
+            return [CalculationError(MissingPytzException())]
         if self._cal is None:
             result = CalculationError(MissingParsedatetimeException())
             return [result]

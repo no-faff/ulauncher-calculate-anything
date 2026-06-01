@@ -105,6 +105,9 @@
     "missing-parsedatetime-error-description": "Install it with \"/usr/bin/python3 -m pip install parsedatetime\" and restart launcher",
 
     "missing-pint-error": "Looks like pint is not installed",
-    "missing-pint-error-description": "Install it with \"/usr/bin/python3 -m pip install pint\" and restart launcher"
+    "missing-pint-error-description": "Install it with \"/usr/bin/python3 -m pip install pint\" and restart launcher",
+
+    "missing-pytz-error": "Looks like pytz is not installed",
+    "missing-pytz-error-description": "Install it with \"/usr/bin/python3 -m pip install pytz\" and restart launcher"
   }
 }

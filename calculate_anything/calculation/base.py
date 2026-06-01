@@ -26,6 +26,7 @@ from calculate_anything.exceptions import (
     MissingParsedatetimeException,
     BooleanPercetageException,
     MissingPintException,
+    MissingPytzException,
 )
 from calculate_anything.constants import CALCULATOR_ERROR
 
@@ -176,6 +177,21 @@ def missing_pint_error_query_result(
     )
 
 
+def missing_pytz_error_query_result(
+    calculation: CalculationError,
+) -> QueryResult:
+    icon = calculation.error.extra.get('icon') or images_dir('time.svg')
+    translator = LanguageService().get_translator('errors')
+    return QueryResult(
+        icon=icon,
+        name=translator('missing-pytz-error'),
+        description=translator('missing-pytz-error-description'),
+        clipboard='/usr/bin/python3 -m pip install pytz',
+        error=calculation.error,
+        order=calculation.order,
+    )
+
+
 def boolean_comparison_error_query_result(
     calculation: CalculationError,
 ) -> QueryResult:
@@ -321,6 +337,7 @@ _HANDLERS: Dict[
     MissingPintException: missing_pint_error_query_result,
     MissingSimpleevalException: missing_simpleeval_query_result,
     MissingParsedatetimeException: missing_parsedatetime_query_result,
+    MissingPytzException: missing_pytz_error_query_result,
     ZeroDivisionException: zero_division_error_query_result,
     DateOverflowException: date_overflow_error_query_result,
     MisparsedDateTimeException: misparsed_time_exception,

@@ -17,10 +17,12 @@ from calculate_anything.exceptions import (
     DateOverflowException,
     MisparsedDateTimeException,
     MissingParsedatetimeException,
+    MissingPytzException,
 )
 from test.tutils import (
     no_default_cities,
     no_parsedatetime,
+    no_pytz,
     reset_instance,
     approxdt,
     approxstr,
@@ -665,6 +667,43 @@ test_spec_parsedatetime_missing = [
 def test_parsedatetime_missing(test_spec):
     # Set parsedatetime to None
     with no_parsedatetime(), reset_instance(TimeQueryHandler):
+        query_test_helper(TimeQueryHandler, test_spec)
+        query_test_helper(MultiHandler, test_spec, raw=True)
+        query_test_helper(MultiHandler, test_spec, raw=False, only_qr=True)
+
+
+test_spec_pytz_missing = [
+    {
+        'query': 'time',
+        'results': [
+            {
+                'result': {
+                    'value': None,
+                    'query': '',
+                    'error': MissingPytzException,
+                    'order': MissingPytzException.order,
+                },
+                'query_result': {
+                    'icon': images_dir('time.svg'),
+                    'name': tr_err('missing-pytz-error'),
+                    'description': tr_err('missing-pytz-error-description'),
+                    'clipboard': '/usr/bin/python3 -m pip install pytz',
+                    'error': MissingPytzException,
+                    'value': None,
+                    'value_type': type(None),
+                    'order': MissingPytzException.order,
+                },
+            }
+        ],
+    }
+]
+
+
+@pytest.mark.parametrize('test_spec', test_spec_pytz_missing)
+def test_pytz_missing(test_spec):
+    # A missing pytz degrades to a clear error rather than failing the import
+    # of the whole extension.
+    with no_pytz(), reset_instance(TimeQueryHandler):
         query_test_helper(TimeQueryHandler, test_spec)
         query_test_helper(MultiHandler, test_spec, raw=True)
         query_test_helper(MultiHandler, test_spec, raw=False, only_qr=True)

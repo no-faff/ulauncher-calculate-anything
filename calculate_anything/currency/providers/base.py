@@ -46,16 +46,14 @@ class CurrencyProvider(ABC):
         self.had_error = False
 
     @classmethod
-    def get_request(cls, params: Dict[str, str] = {}) -> Request:
+    def get_request(cls, params: Dict[str, str] = None) -> Request:
+        params = params or {}
         headers = {'user-agent': 'Calculate Anything'}
         url = urljoin(cls.PROTOCOL + '://' + cls.HOSTNAME, cls.API_URL)
         url = list(urlparse(url))
         url[4] = urlencode(params)
         url = urlunparse(url)
-        request = Request(url, headers=headers)
-        # if not re.match(r'^https:\/\/', request.full_url):
-        #     raise Exception('Invalid request url: {}'.format(request.full_url)) # noqa E502
-        return request
+        return Request(url, headers=headers)
 
     @abstractmethod
     def request_currencies(

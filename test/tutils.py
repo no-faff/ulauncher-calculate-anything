@@ -104,6 +104,22 @@ def no_parsedatetime():
 
 
 @contextmanager
+def no_pytz():
+    pytz = time_handler.pytz
+    time_handler.pytz = None
+
+    exc = None
+    try:
+        yield
+    except Exception as e:
+        exc = e
+
+    time_handler.pytz = pytz
+    if exc:
+        raise exc
+
+
+@contextmanager
 def no_pint(units_service=True):
     pint = units_handler.pint
     units_handler.pint = None

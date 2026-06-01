@@ -100,3 +100,7 @@ class MissingSimpleevalException(MissingModuleException):
 
 class MissingParsedatetimeException(MissingModuleException):
     order = -1300
+
+
+class MissingPytzException(MissingModuleException):
+    order = -1400
