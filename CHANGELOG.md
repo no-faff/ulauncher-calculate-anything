@@ -175,3 +175,17 @@ reliable under load.
 - Reworked the README for the fork: attribution to the original by tchar,
   context on the Ulauncher 6 situation, and removal of stale badges and the
   Albert references that are untested here.
+
+## 2025-12-03
+
+Calculator features contributed by Cyril Li, carried forward into this fork.
+
+### Added
+
+- A trigonometry mode covering degrees, radians and gradians, with `deg` and
+  `rad` functions to convert between them.
+- The reciprocal trig functions `csc`, `sec`, `cot` and their inverses `acsc`,
+  `asec` and `acot`.
+- Ten persistent calculator memory slots, `m0` to `m9`, with functions to load,
+  clear, add, subtract, multiply, divide, raise to a power and take a root of
+  each slot, `mc()` to clear them all, and `ans()` for the last result.
