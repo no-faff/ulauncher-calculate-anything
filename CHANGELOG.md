@@ -1,8 +1,108 @@
 # Changelog
 
-Notable changes to this fork. There are no formal releases; Ulauncher installs
-the extension straight from the repository, so dates are when a change landed on
-the `main` branch.
+Changes to this fork of [tchar's calculate-anything](https://github.com/tchar/ulauncher-albert-calculate-anything),
+the work done on top of the original to fix it for Ulauncher 6 and harden it.
+There are no formal releases; Ulauncher installs the extension straight from the
+repository, so dates are when a change landed on the `main` branch.
+
+## 2026-06-01
+
+An audit pass over the whole module: the calculator and base-n evaluation, the
+currency, time and unit domains, the localisation layer, dependency handling and
+the docs. Every fix below ships with regression tests (the suite went from 365 to
+387, and both the babel and non-babel test paths stay green).
+
+### Security
+
+- The expression evaluator no longer allows attribute access, so string and
+  bytes methods can no longer be reached. `= 'a'.center(500000000)` previously
+  allocated hundreds of megabytes from a one-line input. Numbers, operators
+  and the built-in function names are the only tokens the calculator and base-n
+  evaluators now accept.
+- The power operator caps the exponent rather than the simpleeval default of
+  four million, so `= 9 ^ 4000000` is rejected before it is computed instead of
+  spending over a second building a multi-million-digit integer. The memory
+  power and root functions (`m0e`, `m0r`) go through the same guard.
+- A pasted query longer than 1000 characters is refused before it reaches any
+  handler, so an oversized paste cannot be used to drive the regex or evaluation
+  paths.
+- The time-query split pattern was made linear. A run of spaces after `time`
+  caused quadratic backtracking, so a long whitespace paste froze the launcher
+  for seconds on every keystroke.
+- Removed three unused regexes, two of which (the old currency-query patterns)
+  backtracked catastrophically, so they cannot be reintroduced into a live path
+  by mistake.
+
+### Fixed
+
+- Negative base-n results keep their sign. `dec 3 - 5` showed `b10`, `o2` and
+  `x2` for binary, octal and hex instead of `-10`, `-2` and `-2`.
+- A power past the float range, such as `= 2 ^ 1024`, no longer interrupts the
+  query while building its result; it returns no result cleanly.
+- `= 9 ^ 9 ^ 9` and similar oversized powers no longer log a spurious error
+  every keystroke; they are recognised as a normal rejection.
+- `time at Athens, AL` and other state-code lookups work again. The state match
+  in the city database compared the wrong identifiers and never matched, so only
+  the local time showed.
+- A corrupt or truncated timezone cache no longer breaks the `time` command. The
+  damaged file is now detected when it is opened and the built-in database is
+  used instead, where before the first query failed and showed no cities until
+  the file was deleted by hand.
+- `time minus 1 day` reads as "Yesterday" rather than "last week" when the day
+  before falls in the previous calendar week.
+- The percentage subtraction `= 50 - 10%` is described as a subtraction, not an
+  addition. The result was already correct.
+- Equality between imaginary values is correct: `= 2i = 3i` is false, where it
+  previously compared only the real parts and returned true.
+- A malformed exchange rate from mycurrency.net (a non-numeric value) is now
+  dropped on its own instead of discarding every rate from that fetch.
+- Bare unit names like `pint` and the `currency_` internal prefix are stripped
+  correctly. The previous code removed a set of characters rather than a prefix,
+  which mangled some lowercase aliases.
+- Missing pytz shows a clear "install pytz" message rather than stopping the
+  whole extension from loading, matching how the other dependencies already
+  degrade.
+- Temperatures localise on the same minimal-locale systems where other units
+  already did; the two paths now resolve the locale the same way.
+- Text you type in a `time until ...` query keeps its capitalisation in the
+  result: "until March" is no longer echoed back as "Until march".
+
+### Changed
+
+- The exchange-rate cache is written atomically. It is serialised to a temporary
+  file and swapped into place, so a crash or a concurrent read during the write
+  can no longer leave a half-written `currency_data.json`.
+
+### Internal
+
+- Corrected the `CurrencyRate` type to name the field the providers actually
+  write (`timestamp_refresh`), fixed the `is_not_types` type hints, and replaced
+  two mutable default arguments with `None`.
+- Fixed the percentage-handler error logs that all read "inverse percentage"
+  regardless of which percentage path they came from.
+- Added a `capitalize_first` helper so only the first character of a string is
+  upper-cased, leaving acronyms and non-English words intact.
+- Added the `of` and `is` keys to the calculator translation strings, so the
+  percentage descriptions can be localised rather than falling back to English.
+- Added regression tests across the calculator, base-n, percentage, time,
+  currency and utility suites for every fix above, plus a missing-pytz path and a
+  corrupt-cache path.
+
+### Documentation
+
+- Corrected the README worked examples (`3 + 2 * pi % of cos(pi) + 5` is
+  0.371327; the `until midnight` and SI-case-symbol notes now match the
+  behaviour) and dropped the stale "requires cache" note on default currencies
+  now that they fetch on demand.
+- Fixed the manifest preference help text: two entries used a misspelt key, so
+  Ulauncher showed no description for Default Currencies and Default Cities, and
+  the units-conversion-mode entry had no description at all.
+- Made the API documentation examples actually run: corrected the import paths,
+  the `QueryHandler` class name, the handler call and the logging-handler
+  example, and added the service-start calls the query example needs.
+- Added a missing-pytz install message to the locale strings.
+- Fixed clear spelling slips in the inherited comments and docstrings, leaving
+  the original wording and tone otherwise untouched.
 
 ## 2026-05-31
 
