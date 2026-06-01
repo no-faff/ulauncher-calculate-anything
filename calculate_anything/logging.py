@@ -83,7 +83,7 @@ class ColorFormatter(_logging.Formatter):
             {{levelname}} | [{BOLD}{{name}}.{{funcName}}:{{lineno}}{RESET}]:
             {{message}}'
         date_fmt (str): A date format, default '%Y-%m-%d:%H:%M:%S'
-        use_color (bool): Wether to use colors or not, default True
+        use_color (bool): Whether to use colors or not, default True
         '''
         if use_color:
             seqs = ColorFormatter.SEQS
@@ -107,7 +107,7 @@ class ColorFormatter(_logging.Formatter):
             str: A formatted string
         '''
         if self._use_color and record.levelname in ColorFormatter.COLORS:
-            # Copy record as we are changhing the levelname
+            # Copy record as we are changing the levelname
             record = copy.copy(record)
             levelname = record.levelname
             levelname = (
@@ -170,7 +170,7 @@ class CustomHandler(_logging.Handler):
 
 class Logging:
     '''Holds the logging information such as handlers to use.
-    Prefer to use the functons provided in this module.
+    Prefer to use the functions provided in this module.
     '''
 
     def __init__(self):

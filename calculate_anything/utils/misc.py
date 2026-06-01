@@ -104,7 +104,7 @@ def get_or_default(
         type (Any): The type to check the value against.
         default (Any): Default value to return if value does not match
             type or in allowed values.
-        allowed_values (contianer, optional): Allowed values for the value
+        allowed_values (container, optional): Allowed values for the value
             provided. If None or nothing is provided it will not be used.
 
     Returns:
@@ -156,7 +156,7 @@ class StupidEval:
             return None
 
     def eval(self, query: str) -> Union[int, complex, float]:
-        '''Evalutes the expression as integer, float or complex.
+        '''Evaluates the expression as integer, float or complex.
 
         Args:
             query (str): The query to evaluate.

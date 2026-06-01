@@ -128,7 +128,7 @@ class CurrencyPreferences(_Preferences):
             use
         cache_update_frequency (int): An integer representing the current
             interval of cache update in seconds
-        cache_enabled (bool): Wether cache is currently enabled or not
+        cache_enabled (bool): Whether cache is currently enabled or not
         providers (tuple of str): A tuple of currently enabled currency
             providers.
     '''
@@ -207,7 +207,7 @@ class CurrencyPreferences(_Preferences):
     def add_provider(
         self, provider: Union[str, CurrencyProvider], api_key: str = ''
     ) -> None:
-        '''A currency provider to be added with an asociated api_key.
+        '''A currency provider to be added with an associated api_key.
         The provider is not set immediately, but only after 'commit()' is
         called
 

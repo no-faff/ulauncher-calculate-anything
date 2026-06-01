@@ -263,7 +263,7 @@ class UnitsQueryHandler(QueryHandler, metaclass=Singleton):
         items.extend(self._items_for_currency_errors(unit_set))
 
         if not units_to:
-            # Add currency units if compattible with units from
+            # Add currency units if compatible with units from
             # and map them to units
             if unit_from_ureg_currency:
                 unit_from_ureg_currency_str = str(unit_from_ureg_currency.units)
