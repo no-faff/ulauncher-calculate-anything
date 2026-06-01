@@ -18,7 +18,7 @@ class PintDefinitionParser:
     def _define_currency(
         self, currency: str, definition: Optional[str] = None
     ) -> None:
-        currency_norm = currency.lstrip('currency_')
+        currency_norm = currency.removeprefix('currency_')
         currency_upper = 'currency_{}'.format(currency_norm.upper())
         definition = definition or 'nan currency_EUR'
 
@@ -36,7 +36,7 @@ class PintDefinitionParser:
         translation_adder: Callable[[str, str], None],
         is_currency: bool,
     ) -> None:
-        aliases = line.lstrip('@alias').split('=')
+        aliases = line.removeprefix('@alias').split('=')
         aliases = map(str.strip, aliases)
         root_alias = None
         aliases_to_define = []
@@ -62,7 +62,7 @@ class PintDefinitionParser:
     def _process_reverse_alias(
         self, line: str, translation_adder: Callable[[str, str], None]
     ) -> None:
-        aliases = line.strip('@reverse.alias').split('=')
+        aliases = line.removeprefix('@reverse.alias').split('=')
         aliases = list(map(str.strip, aliases))
         root_alias, aliases_to_define = aliases[0], aliases[1:]
         if not aliases_to_define or not root_alias:

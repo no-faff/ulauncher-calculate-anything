@@ -82,13 +82,13 @@ class BaseNQueryHandler(QueryHandler, metaclass=Singleton):
         base: int,
         digits_re: 're.Pattern',
         base_class: Type['BaseNQueryHandler'],
-        convert_classes: List[Type['BaseNQueryHandler']] = [],
+        convert_classes: List[Type['BaseNQueryHandler']] = None,
     ) -> None:
         super().__init__(keyword)
         self._base = base
         self._digits_re = digits_re
         self._base_class = base_class
-        self._convert_classes = convert_classes
+        self._convert_classes = convert_classes or []
         self._simple_eval = get_simple_eval()
 
     def _parse_expression(
