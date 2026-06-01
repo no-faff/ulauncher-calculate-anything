@@ -110,20 +110,21 @@
       "id": "default_currencies",
       "type": "input",
       "name": "Default Currencies",
-      "desciption": "A comma separated list of currencies to display if not target currency is specified (works only when cache enabled)",
+      "description": "A comma separated list of currencies to display when no target currency is specified",
       "default_value": "USD,EUR,GBP,CAD"
     },
     {
       "id": "default_cities",
       "type": "input",
       "name": "Default Cities",
-      "desciption": "A comma separated list of cities to display local time",
+      "description": "A comma separated list of cities to display local time",
       "default_value": "New York City US, London GB, Madrid ES, Vancouver CA, Athens GR"
     },
     {
       "id": "units_conversion_mode",
       "type": "select",
       "name": "Units Conversion mode",
+      "description": "Normal, or crazy mode which converts every compatible unit it can find",
       "default_value": "normal",
       "options": [
         {"value": "normal", "text": "Normal"},

@@ -137,7 +137,7 @@ Press **Enter** on any result to copy it to the clipboard.
 
 **Currency** (`=` then)
 
-- `AMOUNT CURRENCY` for the default currencies set in preferences (requires cache)
+- `AMOUNT CURRENCY` for the default currencies set in preferences
 - `AMOUNT CURRENCY to CURRENCY1,CURRENCY2,CURRENCY3`
 - `CURRENCY to CURRENCY1,CURRENCY2,CURRENCY3`
 
@@ -153,8 +153,7 @@ centimetres). Comma separated targets can have spaces between them.
 Unit names are case-insensitive, **except** SI symbols where the case carries
 the prefix (`m` is milli, `M` is mega). So `mW` is milliwatts and `MW`
 megawatts, `mPa` millipascals and `MPa` megapascals. Type the correct case for
-those to be exact; a wrongly-cased symbol falls back to whichever matches,
-usually the smaller one.
+those: a wrongly-cased symbol such as `KW` may not resolve and return no result.
 
 **Percentages** (`=` then)
 
@@ -233,7 +232,7 @@ In the following examples you can specify a specific date and time or say for ex
 Keywords such as `a/next/last/previous/ago`, `years/months/weeks/days/hours/minutes/seconds`, `morning/noon/afternoon/evening/night/midnight`, `tomorrow/yesterday` and the combination of those will work like in the normal mode.
 
 - `time until December 31 midnight`: Returns remaining days, hours minutes until January 00:00:00 (end of day for December)
-- `time until midnight`: Returns remaining hours minutes seconds until midnight for this day (midnight is at 00:00:00)
+- `time until midnight`: Returns remaining hours minutes seconds until midnight (00:00:00 at the start of the next day)
 - `time until tomorrow`: Day starts at 09:00
 - `time until tomorrow evening`: Hours/Days until tomorrow at 18:00 
 - `time until a year ago`: Negative result
@@ -286,7 +285,7 @@ The units supported are all units that [pint](https://github.com/hgrecco/pint) s
 
 #### **Advanced Cases**
 - `10% of cos(pi) + 5`: Answer is 0.4
-- `3 + 2 * pi % of cos(pi) + 5`: Answer is 0.371328
+- `3 + 2 * pi % of cos(pi) + 5`: Answer is 0.371327
 - `5 as % sqrt(2) + 5`: Answer is 77.9519%
 - `1 + sin(pi) as % sqrt(2) + 5`: Answer is 15.5904%
 

@@ -77,7 +77,14 @@ Here are some examples
 ```python
 # Import the handlers
 
-from calculate_anything.query import MultiHandler
+from calculate_anything.query.handlers import MultiHandler
+from calculate_anything.units import UnitsService
+from calculate_anything.time import TimezoneService
+
+# Units and time queries need their services running first (the Ulauncher
+# extension starts these on launch).
+UnitsService().start()
+TimezoneService().start()
 
 
 # Create a queries
@@ -161,14 +168,14 @@ for calculation in calculations:
 
 ## Extending QueryHandlers
 
-You can write your own handler by subclassing the `QyeryHandler` class
+You can write your own handler by subclassing the `QueryHandler` class
 
 ```python
 from calculate_anything.query.handlers.base import QueryHandler
-from calculate_anything.calculation import Calculation
+from calculate_anything.calculation.base import Calculation
 from calculate_anything.query.handlers import CalculatorQueryHandler
 
-class MyHandler(QyeryHandler):
+class MyHandler(QueryHandler):
     # The keyword can be anything (i.e "=", "+", ...)
     def __init__(self, keyword='customKeyword'):
         super().__init__(keyword)
@@ -181,16 +188,20 @@ class MyHandler(QyeryHandler):
 
     # Here you implement the logic of handling. You can use other handlers
     # too to help you parse your query. For example you can split your query
-    # and calculate each part with the CalculatorQueryHandler and then concatenate
-    # everythin to a custom Caclulation
+    # and calculate each part with the CalculatorQueryHandler and then
+    # concatenate everything to a custom Calculation
     def handle_raw(self, query):
-        # Use other query handler to calculate something
-        calculation = CalculatorQueryHandler(query)
-        
+        # Use another query handler to calculate something. handle returns a
+        # list, so take the first calculation.
+        calculations = CalculatorQueryHandler().handle(query)
+        if not calculations:
+            return []
+        calculation = calculations[0]
+
         # Check if errors exist
-        if calculatione.error:
+        if calculation.error:
             return [calculation]
-        
+
         value = calculation.value
         parsed_query = calculation.query
         calculation1 = Calculation(value + 1, parsed_query, order=0)
@@ -201,7 +212,7 @@ class MyHandler(QyeryHandler):
     # You can use this decorator to automatically reject queries 
     # That do not start with your keyword. This will call the 
     # can_handle() method above, or if not implemented it will call the super method
-    @QyeryHandler.Decorators.can_handle
+    @QueryHandler.Decorators.can_handle
     def handle(self, query):
         return self.handle_raw(query)
 ```
@@ -298,7 +309,7 @@ Not documented yet (It should be added through the `CombinedCurrencyProvider`)
 
 ## Logging
 
-The logging module used by `calculate_anything` is at `calculate_anything.logging` and is a wrapper for Python's `loggin` module.
+The logging module used by `calculate_anything` is at `calculate_anything.logging` and is a wrapper for Python's `logging` module.
 By default 2 handlers are used
 - A `StreamHandler` with color formatting to print to the stdout/stderr
 - A `RotatingFileHandler` that stores logs to the `[path to calculate_anything's cache]/logs`
@@ -313,8 +324,8 @@ logging.disable_file_handler()
 logging.disable_stdout_handler()
 
 # Or even set a custom handler
-handler = logging.CustomHandler(debug=print, info=print, warning=print, critical=print, critical=print)
-# You can even use custom format and coloring, just remeber to use double braces for Python's logging format and single braces for coloring
+handler = logging.CustomHandler(debug=print, info=print, warning=print, error=print, critical=print)
+# You can even use custom format and coloring, just remember to use double braces for Python's logging format and single braces for coloring
 handler.setFormatter(logging.ColorFormatter(
     fmt='[{BLUE}{{name}}.{{funcName}}:{{lineno}}{RESET}]: {{message}}',
     use_color=True
@@ -327,24 +338,24 @@ This is the preferences documentation with all possible preferences.
 
 Suppose you already have initiated the `preferences` object with
 ```python
-from calculate_anything import Preferences
+from calculate_anything.preferences import Preferences
 pref = Preferences()
 ```
 
 | Preference | Description |
 | ----------- | ----------- |
 | `pref.language.lang` | the current language as a `str`    |
-| `pref.language.set(lang)` | sets the language to be comitted. lang must be a `str` (i.e 'en_US')       |
+| `pref.language.set(lang)` | sets the language to be committed. lang must be a `str` (i.e 'en_US')       |
 | `pref.time.default_cities` | returns the current default cities as a `list` of `dicts`|
 | `pref.time.set_default_cities(cities)` | sets the default cities. cities must be either comma seperated `str` or an `iterable` of `str` |
 | `pref.currency.default_currencies` | returns the current default currencies as a `list` of `str` |
-| `pref.currency.set_default_currencies(currencies)` | sets the default currencies to be commited. must be a `str` of comma separated currencies or an `iterable` of `str` |
+| `pref.currency.set_default_currencies(currencies)` | sets the default currencies to be committed. must be a `str` of comma separated currencies or an `iterable` of `str` |
 | `pref.currency.cache_update_frequency` | returns the current cache update frequency as an `int` representing seconds |
-| `pref.currency.set_cache_update_frequency(freq)` | sets the cache update frequency to be commited. must be `int` representing seconds |
+| `pref.currency.set_cache_update_frequency(freq)` | sets the cache update frequency to be committed. must be `int` representing seconds |
 | `pref.currency.enable_cache(freq)` | Alias of `pref.currency.set_cache_update_frequency` |
 | `pref.currency.disable_cache()` | Disables cache (i.e `frequency = 0`)        |
 | `pref.currency.providers` | Returns a `list` of `str` representing the current currency providers used |
 | `pref.currency.add_provider(provider, api_key='')` | Sets the currency provider to be used. If the first parameter is an instance of `CurrencyProvider`, `api_key` is ignored, otherwise uses provider as a `str` to find a matching provider by name (`api_key` is optional and `''` by default) |
 | `pref.currency.remove_provider(provider)` | Removes provider. provider can be either a `str` or a `CurrencyProvider` instance |
 | `pref.units.conversion_mode` | Gets the current units conversion mode as an `int` from `UnitsService.ConversionMode` `enum` |
-| `pref.units.set_conversion_mode(mode)` | Sets the conversion mode to be commited. Can be either a str (i.e 'normal'/'crazy' or an int from `UnitsService.ConversionMode` `enum`)        |
+| `pref.units.set_conversion_mode(mode)` | Sets the conversion mode to be committed. Can be either a str (i.e 'normal'/'crazy' or an int from `UnitsService.ConversionMode` `enum`)        |
