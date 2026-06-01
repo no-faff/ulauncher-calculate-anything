@@ -7,6 +7,7 @@ from urllib.error import HTTPError
 from calculate_anything.currency.data import CurrencyData
 from calculate_anything.currency.providers import FreeCurrencyProvider
 from calculate_anything import logging
+from calculate_anything.utils import get_or_default
 from calculate_anything.exceptions import CurrencyProviderException
 
 
@@ -39,7 +40,12 @@ class MyCurrencyNetCurrencyProvider(FreeCurrencyProvider):
         for rate in rates:
             if 'rate' not in rate or 'currency_code' not in rate:
                 continue
-            r = rate['rate']
+            # Coerce and skip non-numeric rates, like the other providers do.
+            # An unvalidated string rate later hits rate * base_rate and raises,
+            # losing every rate from this fetch instead of just the bad one.
+            r = get_or_default(rate['rate'], float, None)
+            if r is None:
+                continue
             cc = rate['currency_code']
             if 'EUR' in [base_currency, cc]:
                 found_eur = True

@@ -1,5 +1,6 @@
 import os
 import json
+import tempfile
 from datetime import datetime
 from functools import wraps
 from typing import Any, Callable, Optional, TypeVar
@@ -140,8 +141,23 @@ class CurrencyCache:
             return self
         logger.info('Writing currency data to file')
         try:
-            with open(CURRENCY_DATA_FILE, 'w', encoding='utf-8') as f:
-                f.write(json.dumps(self._data))
+            # Serialise first, then swap a fully written temp file into place
+            # with os.replace (atomic on the same filesystem), so a crash or a
+            # concurrent reader can only ever see the old or the new cache,
+            # never a half-written one.
+            payload = json.dumps(self._data)
+            directory = os.path.dirname(CURRENCY_DATA_FILE)
+            fd, tmp = tempfile.mkstemp(dir=directory, suffix='.tmp')
+            try:
+                with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                    f.write(payload)
+                os.replace(tmp, CURRENCY_DATA_FILE)
+            except Exception:
+                try:
+                    os.remove(tmp)
+                except OSError:  # pragma: no cover
+                    pass
+                raise
         except Exception as e:  # pragma: no cover
             logger.exception(
                 'Could not save cache data {}: {}'.format(CURRENCY_DATA_FILE, e)

@@ -50,6 +50,26 @@ def test_missing_fields(mock_currency_provider, mycurrencynet_data):
         assert mycurrencynet.had_error is False
 
 
+def test_non_numeric_rate(mock_currency_provider, mycurrencynet_data):
+    # A malformed rate (a string) must be dropped, not carried through as-is;
+    # otherwise it later hits rate * base_rate and loses the whole fetch.
+    cls = MyCurrencyNetCurrencyProvider
+    rates = [
+        (
+            {'currency_code': k, 'rate': v}
+            if k != 'USD'
+            else {'currency_code': k, 'rate': 'not-a-number'}
+        )
+        for k, v in currency_data()['rates'].items()
+    ]
+    data = mycurrencynet_data('EUR', rates)
+
+    with mock_currency_provider(cls, data, use_json=True) as mycurrencynet:
+        currencies = mycurrencynet.request_currencies()
+        assert currencies == expected_currencies(filterc=['USD'])
+        assert mycurrencynet.had_error is False
+
+
 def test_eur_not_in_rates(mock_currency_provider, mycurrencynet_data):
     cls = MyCurrencyNetCurrencyProvider
     rates = [
