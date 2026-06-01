@@ -116,10 +116,12 @@ the docs. Every fix below ships with regression tests (the suite went from 365 t
   **None**. None means "do not store a cache" rather than "currency off": rates
   are fetched on demand when you convert, held in memory only, and reused
   briefly so back-to-back conversions do not refetch. A "Fetching exchange
-  rates..." line shows while the first fetch loads. (#7, originally raised in #1)
+  rates..." line shows while the first fetch loads. (#7, originally raised in #1
+  by [Karl Lundgren](https://github.com/kallegrens))
 - **babel** is now a core dependency, installed automatically with the others.
   It gives locale-aware formatting: correct plurals, full currency names, and
-  local spellings such as metres and litres on en_GB systems. (#5)
+  local spellings such as metres and litres on en_GB systems. Contributed by
+  [Karl Lundgren](https://github.com/kallegrens). (#5)
 
 ### Changed
 
@@ -127,7 +129,8 @@ the docs. Every fix below ships with regression tests (the suite went from 365 t
   Ulauncher restart. In API v2 compat mode Ulauncher does not reliably signal
   preference changes, so the extension re-reads and re-applies them itself.
 - Dependencies install automatically from a root `requirements.txt`; the manual
-  `pip install` step is gone. (#5)
+  `pip install` step is gone. Contributed by
+  [Karl Lundgren](https://github.com/kallegrens). (#5)
 
 ### Fixed
 
@@ -144,3 +147,31 @@ the docs. Every fix below ships with regression tests (the suite went from 365 t
   keyword-then-space rule, `to` (not `in`) for conversions, the SI symbol case
   rule, base-n syntax and the imperial/US setting, plus fixes to the default
   currencies list and several typos.
+
+## 2026-03-28
+
+The fork's foundation: making the extension work on Ulauncher 6, whose version 6
+beta had broken it, plus the deadlock fix that makes currency conversion
+reliable under load.
+
+### Fixed
+
+- Ulauncher 6 compatibility. Version 6 changed the query API so a handler
+  receives a Query object rather than a string, which stopped the extension
+  working; the keyword handling was updated to suit.
+- Fixed a deadlock where the currency service could block the query handler
+  while it waited on a network request. The service now uses fine-grained
+  locking and sets a timeout on every request, so a slow or unreachable provider
+  no longer freezes the launcher. The fix is a cherry-pick of
+  [nnqnn](https://github.com/nnqnn)'s work in the upstream PR #67.
+
+### Changed
+
+- Saved preferences take effect on the next keystroke rather than needing a
+  Ulauncher restart.
+
+### Documentation
+
+- Reworked the README for the fork: attribution to the original by tchar,
+  context on the Ulauncher 6 situation, and removal of stale badges and the
+  Albert references that are untested here.
